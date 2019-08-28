@@ -86,6 +86,16 @@ localize_x_desktops() {
   if [ "$?" = "0" ] ; then
     echo "gdm_lang=\"${LOCALE}.UTF-8\"" >> ${FSMNT}/etc/rc.conf
   fi
+
+
+  if [ -d "${FSMNT}/usr/local/etc/lightdm" ] ; then
+    if [ -d "${FSMNT}/usr/local/share/xgreeters/slick-greeter.desktop" ] ; then
+      sed -i '' "s/Exec=slick-greeter/Exec=env LANG=${LOCALE}.UTF-8 slick-greeter/g" ${FSMNT}/usr/local/share/xgreeters/slick-greeter.desktop
+    elif [ -d "${FSMNT}/usr/local/share/xgreeters/lightdm-gtk-greeter.desktop" ] ; then
+      sed -i '' "s/Exec=lightdm-gtk-greeter/Exec=env LANG=${LOCALE}.UTF-8 lightdm-gtk-greeter/g" ${FSMNT}/usr/local/share/xgreeters/lightdm-gtk-greeter.desktop
+    fi
+  fi
+
 };
 
 # Function which localizes a TrueOS install
@@ -162,35 +172,32 @@ localize_x_keyboard()
 
     # Save it for KDM
     if [ -e "${FSMNT}/usr/local/kde4/share/config/kdm/Xsetup" ] ; then
-      echo "setxkbmap ${SETXKBMAP}" >>${FSMNT}/usr/local/kde4/share/config/kdm/Xsetup
+      echo "setxkbmap ${SETXKBMAP}" >> ${FSMNT}/usr/local/kde4/share/config/kdm/Xsetup
+    fi
+
+    # Save it for lightdm
+    if [ -f ${FSMNT}/usr/local/etc/lightdm/lightdm.conf ] ; then
+      sed -i '' "s/#greeter-setup-script=/greeter-setup-script=setxkbmap {SETXKBMAP}/g" ${FSMNT}/usr/local/etc/lightdm/lightdm.conf
     fi
   fi
 
-  # For GhostBSD Mate
+  # For Mate and XFCE
   if [ "${KEYVAR}" == "NONE" ] ; then
     if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override ] ; then
-        sed -i '' "s/us/${KXLAYOUT}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
-        run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
+      sed -i '' "s/us/${KXLAYOUT}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
+      run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
+    elif [ -f ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml ] ; then
+      sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
     fi
   else
     if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override ] ; then
-        sed -i '' "s/us/${KXLAYOUT}\\\t${KEYVAR}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
-        run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
+      sed -i '' "s/us/${KXLAYOUT}\\\t${KEYVAR}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
+      run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
+    elif [ -f ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml ] ; then
+      sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
+      sed -i '' "s/value="\"""\""/value="\""${KEYVAR}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
     fi
   fi
-
-  # For GhostBSD XFCE4
-  if [ "${KEYVAR}" == "NONE" ] ; then
-    if [ -f ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml ] ; then
-        sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
-      fi
-  else
-    if [ -f ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml ] ; then
-        sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
-        sed -i '' "s/value="\"""\""/value="\""${KEYVAR}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
-    fi
-  fi
-
 
   # Create the kxkbrc configuration using these options
   if [ -d "${FSMNT}/usr/share/skel/.kde4/share/config" ] ; then
@@ -216,28 +223,13 @@ localize_key_layout()
 
   # Set the keylayout in rc.conf
   case ${KEYLAYOUT} in
-    am) KEYLAYOUT_CONSOLE="hy.armscii-8" ;;
-    ca) KEYLAYOUT_CONSOLE="fr_CA.acc.iso" ;;
-    ch) KEYLAYOUT_CONSOLE="swissgerman.iso" ;;
-    cz) KEYLAYOUT_CONSOLE="cz.iso2" ;;
-    de) KEYLAYOUT_CONSOLE="german.iso" ;;
-    dk) KEYLAYOUT_CONSOLE="danish.iso" ;;
-    et) KEYLAYOUT_CONSOLE="estonian.iso" ;;
-    es) KEYLAYOUT_CONSOLE="spanish.iso" ;;
-    fi) KEYLAYOUT_CONSOLE="finnish.iso" ;;
-    is) KEYLAYOUT_CONSOLE="icelandic.iso" ;;
-    jp) KEYLAYOUT_CONSOLE="jp.106" ;;
-    nl) KEYLAYOUT_CONSOLE="dutch.iso.acc" ;;
-    no) KEYLAYOUT_CONSOLE="norwegian.iso" ;;
-    pl) KEYLAYOUT_CONSOLE="pl_PL.ISO8859-2" ;;
-    ru) KEYLAYOUT_CONSOLE="ru.koi8-r" ;;
-    sk) KEYLAYOUT_CONSOLE="sk.iso2" ;;
-    se) KEYLAYOUT_CONSOLE="swedish.iso" ;;
-    tr) KEYLAYOUT_CONSOLE="tr.iso9.q" ;;
-    gb) KEYLAYOUT_CONSOLE="uk.iso" ;;
+    ca) KEYLAYOUT_CONSOLE="ca-fr.kbd" ;;
+    et) KEYLAYOUT_CONSOLE="ee.kbd" ;;
+    es) KEYLAYOUT_CONSOLE="es.acc.kbd" ;;
+    gb) KEYLAYOUT_CONSOLE="uk.kbd" ;;
      *)  if [ ! -z "${KEYLAYOUT}" ]
          then
-           KEYLAYOUT_CONSOLE="${KEYLAYOUT}.iso"
+           KEYLAYOUT_CONSOLE="${KEYLAYOUT}.kbd"
          fi
         ;;
   esac
