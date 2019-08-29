@@ -38,17 +38,12 @@ localize_freebsd()
 {
   sed -i.bak "s/lang=en_US/lang=${LOCALE}/g" ${FSMNT}/etc/login.conf
   rm ${FSMNT}/etc/login.conf.bak
-  if [ "${INSTALLTYPE}" = "GhostBSD" ] ; then
-    sed -i '' "s/LANG=en_US/LANG=${LOCALE}/g" ${FSMNT}/etc/profile
-    sed -i '' "s/GDM_LANG=en_US/GDM_LANG=${LOCALE}/g" ${FSMNT}/etc/profile
-    sed -i '' "s/LC_ALL=en_US/LC_ALL=${LOCALE}/g" ${FSMNT}/etc/profile
-  fi
-
-  if [ "${INSTALLTYPE}" = "DesktopBSD" ] ; then
-    sed -i '' "s/LANG=en_US/LANG=${LOCALE}/g" ${FSMNT}/etc/profile
-    sed -i '' "s/GDM_LANG=en_US/GDM_LANG=${LOCALE}/g" ${FSMNT}/etc/profile
-    sed -i '' "s/LC_ALL=en_US/LC_ALL=${LOCALE}/g" ${FSMNT}/etc/profile
-  fi
+  sed -i '' "s/LANG=en_US/LANG=${LOCALE}/g" ${FSMNT}/etc/profile
+  sed -i '' "s/GDM_LANG=en_US/GDM_LANG=${LOCALE}/g" ${FSMNT}/etc/profile
+  sed -i '' "s/LC_ALL=en_US/LC_ALL=${LOCALE}/g" ${FSMNT}/etc/profile
+  echo "CHARSET=UTF-8; export CHARSET" ${FSMNT}/usr/share/skel/dot.profile
+  echo "LANG=${LOCALE}.UTF-8;	export LANG" ${FSMNT}/usr/share/skel/dot.profile
+  echo "LC_ALL=${LOCALE}.UTF-8; export LC_ALL" ${FSMNT}/etc/profile
 };
 
 localize_x_desktops() {
@@ -89,9 +84,9 @@ localize_x_desktops() {
 
 
   if [ -d "${FSMNT}/usr/local/etc/lightdm" ] ; then
-    if [ -d "${FSMNT}/usr/local/share/xgreeters/slick-greeter.desktop" ] ; then
+    if [ -f "${FSMNT}/usr/local/share/xgreeters/slick-greeter.desktop" ] ; then
       sed -i '' "s/Exec=slick-greeter/Exec=env LANG=${LOCALE}.UTF-8 slick-greeter/g" ${FSMNT}/usr/local/share/xgreeters/slick-greeter.desktop
-    elif [ -d "${FSMNT}/usr/local/share/xgreeters/lightdm-gtk-greeter.desktop" ] ; then
+    elif [ -f "${FSMNT}/usr/local/share/xgreeters/lightdm-gtk-greeter.desktop" ] ; then
       sed -i '' "s/Exec=lightdm-gtk-greeter/Exec=env LANG=${LOCALE}.UTF-8 lightdm-gtk-greeter/g" ${FSMNT}/usr/local/share/xgreeters/lightdm-gtk-greeter.desktop
     fi
   fi
@@ -177,7 +172,7 @@ localize_x_keyboard()
 
     # Save it for lightdm
     if [ -f ${FSMNT}/usr/local/etc/lightdm/lightdm.conf ] ; then
-      sed -i '' "s/#greeter-setup-script=/greeter-setup-script=setxkbmap {SETXKBMAP}/g" ${FSMNT}/usr/local/etc/lightdm/lightdm.conf
+      sed -i '' "s/#greeter-setup-script=/greeter-setup-script=setxkbmap ${SETXKBMAP}/g" ${FSMNT}/usr/local/etc/lightdm/lightdm.conf
     fi
   fi
 
