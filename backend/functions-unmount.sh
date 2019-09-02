@@ -312,6 +312,10 @@ setup_grub()
 
 setup_efi_boot()
 {
+  get_value_from_cfg installType
+  SYSTEM="${VAL}"
+  UPPERCASE_SYSTEM=$(echo ${SYSTEM} | tr '[:lower:]' '[:upper:]')
+
   # Read through our disk list and setup EFI loader on each
   for disk in $EFI_POST_SETUP
   do
@@ -346,20 +350,20 @@ setup_efi_boot()
       rc_halt "cp /root/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-REFIND.EFI"
       rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
       rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-TRUEOS.EFI"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
       EFIFILE="${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-REFIND.EFI"
-      EFILABEL="TrueOS-rEFInd"
+      EFILABEL="${SYSTEM}-rEFInd"
     else
       # BSD Loader only
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-TRUEOS.EFI"
-      EFIFILE="${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-TRUEOS.EFI"
-      EFILABEL="TrueOS"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
+      EFIFILE="${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
+      EFILABEL="${SYSTEM}"
     fi
 
     # Check if this label already exists and delete if so
     EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g')
     if [ -n "$EFINUM" ] ; then
-	rc_nohalt "efibootmgr -B $EFINUM"
+      rc_nohalt "efibootmgr -B $EFINUM"
     fi
 
     # Create the new EFI entry
