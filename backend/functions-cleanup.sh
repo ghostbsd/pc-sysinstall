@@ -67,7 +67,7 @@ zfs_cleanup_unmount()
       # Using ZFS from base
       sysrc -f ${FSMNT}/boot/loader.conf zfs_load=YES
     fi
-   
+
     # Copy over any ZFS cache data
     cp /boot/zfs/* ${FSMNT}/boot/zfs/ >/dev/null 2>/dev/null
 
@@ -137,7 +137,7 @@ setup_dedicated_boot_part()
   # Strip the '/' from BOOTMNT before making symlink
   BOOTMNTNS="`echo ${BOOTMNT} | sed 's|/||g'`"
   rc_halt "chroot ${FSMNT} ln -s ${BOOTMNTNS}/boot /boot"
-  
+
 };
 
 # Function which creates the /etc/fstab for the installed system
@@ -181,7 +181,7 @@ setup_fstab()
       fi
       DEVICE="label/${PARTLABEL}${EXT}"
     else
-      # Check if using encryption 
+      # Check if using encryption
       if [ "${PARTENC}" = "ON" ] ; then
         EXT=".eli"
       fi
@@ -250,7 +250,7 @@ setup_fstab()
   fi
 
   # If we have a dedicated /boot, run the post-install setup of it now
-  if [ ! -z "${BOOTMNT}" ] ; then 
+  if [ ! -z "${BOOTMNT}" ] ; then
     setup_dedicated_boot_part "${ROOTFS}" "${ROOTFSTYPE}" "${BOOTFS}" "${BOOTMNT}"
   fi
 
@@ -286,9 +286,9 @@ setup_geli_loading()
 
      # If no passphrase, setup key files
      if [ ! -e "${PARTDIR}-enc/${PART}-encpass" ] ; then
-       echo "geli_${PARTNAME}_keyfile0_load=\"YES\"" >> ${FSMNT}/boot/loader.conf 
-       echo "geli_${PARTNAME}_keyfile0_type=\"${PARTNAME}:geli_keyfile0\"" >> ${FSMNT}/boot/loader.conf 
-       echo "geli_${PARTNAME}_keyfile0_name=\"/boot/keys/${PARTNAME}.key\"" >> ${FSMNT}/boot/loader.conf 
+       echo "geli_${PARTNAME}_keyfile0_load=\"YES\"" >> ${FSMNT}/boot/loader.conf
+       echo "geli_${PARTNAME}_keyfile0_type=\"${PARTNAME}:geli_keyfile0\"" >> ${FSMNT}/boot/loader.conf
+       echo "geli_${PARTNAME}_keyfile0_name=\"/boot/keys/${PARTNAME}.key\"" >> ${FSMNT}/boot/loader.conf
 
        # Copy the key to the disk
        rc_halt "cp ${GELIKEYDIR}/${KEYFILE} ${FSMNT}/boot/keys/${PARTNAME}.key"
@@ -305,9 +305,9 @@ gen_hostname()
 
   if [ "$INSTALLTYPE" = "FreeBSD" ]
   then
-    VAL="freebsd-${RAND}" 
+    VAL="freebsd-${RAND}"
   else
-    VAL="trueos-${RAND}" 
+    VAL="trueos-${RAND}"
   fi
 
   export VAL

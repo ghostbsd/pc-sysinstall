@@ -250,7 +250,8 @@ start_extract_uzip_tar()
         mdconfig -d -u ${MDDEVICE}
         exit_err "ERROR: Failed extracting the tar image"
       fi
-
+      # rc.conf from GhostBSD
+      cp /etc/rc.conf $FSMNT/etc/rc.conf
       # All finished, now lets umount and cleanup
       cd /
       umount /tmp/.uzip
