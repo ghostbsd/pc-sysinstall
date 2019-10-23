@@ -272,22 +272,22 @@ setup_grub()
 
     # Do any EFI creation
     if [ "$EFIMODE" = "TRUE" ] ;then
-       # Installing to disk with existing EFI setup
-       efip=`gpart show $gDisk | grep ' efi ' | awk '{print $3}'`
-       EFIPART="${gDisk}p${efip}"
+      # Installing to disk with existing EFI setup
+      efip=`gpart show $gDisk | grep ' efi ' | awk '{print $3}'`
+      EFIPART="${gDisk}p${efip}"
 
-       if [ -z "$DONEEFILABEL" ] ; then
-         # Label this sucker
-         rc_halt "glabel label efibsd ${EFIPART}"
+      if [ -z "$DONEEFILABEL" ] ; then
+        # Label this sucker
+        ic_halt "glabel label efibsd ${EFIPART}"
 
-         # Save to systems fstab file
-         echo "/dev/label/efibsd	/boot/efi		msdosfs		rw	0	0" >> ${FSMNT}/etc/fstab
-	 DONEEFILABEL="YES"
-       fi
+        # Save to systems fstab file
+        echo "/dev/label/efibsd	/boot/efi		msdosfs		rw	0	0" >> ${FSMNT}/etc/fstab
+        DONEEFILABEL="YES"
+      fi
 
-       # Mount the partition
-       mkdir ${FSMNT}/boot/efi
-       rc_halt "mount -t msdosfs ${EFIPART} ${FSMNT}/boot/efi"
+      # Mount the partition
+      mkdir ${FSMNT}/boot/efi
+      rc_halt "mount -t msdosfs ${EFIPART} ${FSMNT}/boot/efi"
     fi
 
     # Stamp GRUB now
@@ -315,7 +315,7 @@ setup_efi_boot()
   get_value_from_cfg installType
   SYSTEM="${VAL}"
   UPPERCASE_SYSTEM=$(echo ${SYSTEM} | tr '[:lower:]' '[:upper:]')
-
+  LOWERCASE_SYSTEM=$(echo ${SYSTEM} | tr '[:upper:]' '[:lower:]')
   # Read through our disk list and setup EFI loader on each
   for disk in $EFI_POST_SETUP
   do
@@ -335,8 +335,9 @@ setup_efi_boot()
     rc_nohalt "mkdir ${FSMNT}/boot/efi"
     rc_halt "mount -t msdosfs ${EFIPART} ${FSMNT}/boot/efi"
 
-    # Copy the .efi file
+    # make the.efi directory
     rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/BOOT"
+    rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}"
 
     rc_nohalt "kldload efirt"
 
@@ -347,21 +348,29 @@ setup_efi_boot()
 
     if [ -d '/root/refind' -a "$EFILOADER" = "refind" ] ; then
       # We have refind on the install media, lets use that for dual-boot purposes
-      rc_halt "cp /root/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-REFIND.EFI"
-      rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
-      rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
-      EFIFILE="${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-REFIND.EFI"
+      rc_halt "cp /root/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-REFIND.EFI"
+      rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/REFIND.CONF"
+      rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/ICONS"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
+      EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-REFIND.EFI"
       EFILABEL="${SYSTEM}-rEFInd"
     else
       # BSD Loader only
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
-      EFIFILE="${FSMNT}/boot/efi/EFI/BOOT/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
+      EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
       EFILABEL="${SYSTEM}"
     fi
 
+    # Now ensure the fallback location for the EFI boot partition exists, and make it if needed
+    if [ -d '/root/refind' -a "$EFILOADER" = "refind" ] ; then
+      # We have refind on the install media, lets use that for dual-boot purposes
+      rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
+      rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
+    fi
+    cp "${EFIFILE}" "${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
+
     # Check if this label already exists and delete if so
-    EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g')
+    EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
     if [ -n "$EFINUM" ] ; then
       rc_nohalt "efibootmgr -B $EFINUM"
     fi
@@ -369,15 +378,12 @@ setup_efi_boot()
     # Create the new EFI entry
     rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
     #Try to activate this new entry
-    EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g')
+    EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
     if [ -n "$EFINUM" ] ; then
       rc_nohalt "efibootmgr -a $EFINUM" #activate it
       rc_nohalt "efibootmgr -n $EFINUM" #Set it as the next boot default
     fi
-    # Now ensure the fallback location for the EFI boot partition exists, and make it if needed
-    if [ ! -e "${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI" ] ; then
-      cp "${EFIFILE}" "${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
-    fi
+
     # Cleanup
     rc_halt "umount ${FSMNT}/boot/efi"
   done

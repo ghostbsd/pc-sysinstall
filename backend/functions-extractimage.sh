@@ -64,7 +64,7 @@ install_ports_base()
   BFLAVOR="generic"
   get_value_from_cfg baseFlavor
   if [ -n "$VAL" ] ; then
-	  BFLAVOR="${VAL}"
+    BFLAVOR="${VAL}"
   fi
 
   # Install the specified OS flavor
@@ -229,7 +229,7 @@ start_extract_uzip_tar()
       fi
 
       # Start by mounting the uzip image
-      MDDEVICE=`mdconfig -a -t vnode -o readonly -f ${INSFILE}`
+      MDDEVICE=`mdconfig -a -t vnode -o readonly -f ${USR_UZIP_FILE}`
       mkdir -p /tmp/.uzip
       mount -o ro /dev/${MDDEVICE}.uzip /tmp/.uzip
       if [ $? -ne 0 ]
@@ -238,9 +238,9 @@ start_extract_uzip_tar()
       fi
 
       cd /tmp/.uzip
-
+      mkdir ${FSMNT}/usr
       # Copy over all the files now!
-      tar cvf - . 2>/dev/null | tar -xp -C ${FSMNT} -v -f - 2>&1 | tee -a ${FSMNT}/.tar-extract.log
+      tar cvf - . 2>/dev/null | tar -xp -C ${FSMNT}/usr -v -f - 2>&1 | tee -a ${FSMNT}/.tar-extract.log
       if [ $? -ne 0 ]
       then
         cd /
@@ -250,6 +250,7 @@ start_extract_uzip_tar()
         mdconfig -d -u ${MDDEVICE}
         exit_err "ERROR: Failed extracting the tar image"
       fi
+      tar zxf /cdrom/data/mfs.tgz -C ${FSMNT}/
       # rc.conf from GhostBSD
       cp /etc/rc.conf $FSMNT/etc/rc.conf
       # All finished, now lets umount and cleanup
@@ -607,7 +608,7 @@ init_extraction()
       case $PACKAGETYPE in
         uzip) INSFILE="${UZIP_FILE}" ;;
         tar) INSFILE="${TAR_FILE}" ;;
-        livecd) INSFILE="${SYSTEM_UZIP_FILE}" ;;
+        livecd) INSFILE="${USR_UZIP_FILE}" ;;
         dist)
           get_value_from_cfg_with_spaces distFiles
           if [ -z "$VAL" ] ; then
@@ -647,15 +648,15 @@ init_extraction()
 
            INSDIR="${INSFILE}" ; export INSDIR
            start_extract_split
-	   ;;
-	  dist)
+     ;;
+    dist)
            fetch_dist_file
            start_extract_dist "$DLDIR"
-	   ;;
-	     *)
+     ;;
+       *)
            fetch_install_file
            start_extract_uzip_tar
-	   ;;
+     ;;
        esac
       ;;
 
