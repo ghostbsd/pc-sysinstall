@@ -366,8 +366,10 @@ setup_efi_boot()
       # We have refind on the install media, lets use that for dual-boot purposes
       rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
       rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
+      rc_halt "cp /root/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
+    else
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
     fi
-    cp "${EFIFILE}" "${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
 
     # Check if this label already exists and delete if so
     EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
