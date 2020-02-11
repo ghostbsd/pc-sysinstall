@@ -326,20 +326,18 @@ delete_all_gpart()
 {
   echo_log "Deleting all gparts"
   local DISK="$1"
-
+  # clear all zfs label in all the partiton
+  for device in `ls /dev | grep "$DISK"`
+  do
+    rc_nohalt "zpool labelclear -f ${device}"
+  done
   # Check for any swaps to stop
   for i in `swapctl -l | grep "$DISK" | awk '{print $1}'`
   do
     swapoff ${i} >/dev/null 2>/dev/null
   done
-
   # Destroy the disk geom
   rc_nohalt "gpart destroy -F ${DISK}"
-  rc_nohalt "zpool labelclear -f ${DISK}"
-
-  # Make double-sure
-  rc_halt "gpart create -s gpt ${DISK}"
-  rc_halt "gpart destroy -F ${DISK}"
 
   # Make sure we clear any hidden gpt tables
   clear_backup_gpt_table "${DISK}"
@@ -634,7 +632,7 @@ setup_disk_slice()
             ;;
 
           p1|p2|p3|p4|p5|p6|p7|p8|p9|p10|p11|p12|p13|p14|p15|p16|p17|p18|p19|p20|p21|p22|p23|p24|p25|p26|p27|p28|p29|p30)
-            tmpSLICE="${DISK}${PTYPE}" 
+            tmpSLICE="${DISK}${PTYPE}"
             # Get the number of the gpt partition we are working on
             s="`echo ${PTYPE} | cut -c 2-3`"
             run_gpart_gpt_part "${DISK}" "${BMANAGER}" "${s}"
