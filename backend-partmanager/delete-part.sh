@@ -85,7 +85,7 @@ gpart delete -i ${PARTINDEX} ${DISK} >/dev/null 2>/dev/null
 # Check if this was the last partition and destroy the disk geom if so
 get_disk_partitions "${DISK}"
 if [ -z "${VAL}" ] ; then
-  gpart destroy ${DISK}  
+  gpart destroy -F ${DISK}  
 fi
 
 exit "$?"
