@@ -762,7 +762,7 @@ init_apm_full_disk()
 
   echo_log "Running gpart on ${_intDISK}"
   rc_halt "gpart create -s APM ${_intDISK}"
-  rc_halt "gpart add -s 800k -t freebsd-boot ${_intDISK}"
+  rc_halt "gpart add -a 4k -s 800k -t freebsd-boot ${_intDISK}"
 
   echo_log "Stamping boot sector on ${_intDISK}"
   rc_halt "gpart bootcode -p /boot/boot1.hfs -i 1 ${_intDISK}"
@@ -808,9 +808,9 @@ init_gpt_full_disk()
   else
     if [ "${_intBOOT}" = "GRUB" ] ; then
       # Doing bios-boot partition
-      rc_halt "gpart add -s 1M -t bios-boot ${_intDISK}"
+      rc_halt "gpart add -a 4k -s 1M -t bios-boot ${_intDISK}"
     else
-      rc_halt "gpart add -s 512 -t freebsd-boot ${_intDISK}"
+      rc_halt "gpart add -a 4k -s 512 -t freebsd-boot ${_intDISK}"
       echo_log "Stamping boot sector on ${_intDISK}"
       rc_halt "gpart bootcode -b /boot/pmbr ${_intDISK}"
     fi
@@ -1054,7 +1054,7 @@ run_gpart_free()
   if [ "$tag" = "freegpt" -a "$SLICENUM" -eq 1 ] ; then
     if [ "$BOOTMODE" != "UEFI" ]; then
       # Doing bios-boot partition
-      rc_halt "gpart add -s 1M -t bios-boot ${DISK}"
+      rc_halt "gpart add -a 4k -s 1M -t bios-boot ${DISK}"
     fi
     SLICENUM="2"
   fi
