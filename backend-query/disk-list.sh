@@ -86,7 +86,7 @@ do
   fi
 
   # Try and find some identification information with camcontrol
-  NEWLINE=$(camcontrol identify $DEV 2>/dev/null | sed -ne 's/^device model *//p')
+  NEWLINE=$(diskinfo -v ${DEV} 2>/dev/null | grep 'Disk descr' | cut -d '#' -f1 | tr -d '\t')
   if [ -z "$NEWLINE" ]; then
      NEWLINE=" <Unknown Device>"
   fi
@@ -119,7 +119,7 @@ do
     if [ -n "$DLIST" ]; then
       DLIST="\n${DLIST}"
     fi
-    DLIST="${DEV}:${NEWLINE}${DLIST}"
+    DLIST="${DEV}: ${NEWLINE}${DLIST}"
   else
     # USB Device, we list those last
 
@@ -130,7 +130,7 @@ do
     if [ -n "$USBLIST" ]; then
       USBLIST="\n${USBLIST}"
     fi
-    USBLIST="${DEV}:${NEWLINE}${USBLIST}"
+    USBLIST="${DEV}: ${NEWLINE}${USBLIST}"
   fi
 
 done

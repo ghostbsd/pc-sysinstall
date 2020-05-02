@@ -53,7 +53,7 @@ KB="`diskinfo -v ${1} | grep 'bytes' | cut -d '#' -f 1 | tr -s '\t' ' ' | tr -d 
 MB=$(convert_byte_to_megabyte ${KB})
 
 # Now get the Controller Type
-CTYPE="`dmesg | grep "^${1}:" | grep "B <" | cut -d '>' -f 2 | cut -d ' ' -f 3-10`"
+CTYPE="`dmesg | grep "^${1}:" | grep ": <" | cut -d '>' -f 2 | cut -d ' ' -f 3-10`"
 
 echo "cylinders=${CYLS}"
 echo "heads=${HEADS}"
