@@ -38,12 +38,8 @@ localize_freebsd()
 {
   sed -i.bak "s/lang=en_US/lang=${LOCALE}/g" ${FSMNT}/etc/login.conf
   rm ${FSMNT}/etc/login.conf.bak
-  sed -i '' "s/LANG=en_US/LANG=${LOCALE}/g" ${FSMNT}/etc/profile
-  sed -i '' "s/GDM_LANG=en_US/GDM_LANG=${LOCALE}/g" ${FSMNT}/etc/profile
-  sed -i '' "s/LC_ALL=en_US/LC_ALL=${LOCALE}/g" ${FSMNT}/etc/profile
-  echo "CHARSET=UTF-8; export CHARSET"  >> ${FSMNT}/usr/share/skel/dot.profile
-  echo "LANG=${LOCALE}.UTF-8;	export LANG" >> ${FSMNT}/usr/share/skel/dot.profile
-  echo "LC_ALL=${LOCALE}.UTF-8; export LC_ALL" >> ${FSMNT}/etc/profile
+  sed -i '' "s/en_US/${LOCALE}/g" ${FSMNT}/etc/profile
+  sed -i '' "s/en_US/${LOCALE}/g" ${FSMNT}/usr/share/skel/dot.profile
 };
 
 localize_x_desktops() {
