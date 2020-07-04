@@ -930,7 +930,7 @@ run_gpart_gpt_part()
       echo "${DISK}" >> ${TMPDIR}/.grub-install
     fi
   else
-    if [ "$BOOTMODE" ! = "UEFI" ] ; then
+    if [ "$BOOTMODE" != "UEFI" ] ; then
       # Setting boot for GhostBSD utile grub support is part of the Project.
       rc_halt "gpart bootcode -b /boot/pmbr ${DISK}"
     fi
