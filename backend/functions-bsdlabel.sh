@@ -568,7 +568,7 @@ new_gpart_partitions()
       # Create the partition
       if [ "${_pType}" = "gpt" -o "$_pType" = "newgpt" ] ; then
         sleep 2
-        aCmd="gpart add -a 4k -i ${CURPART} ${SOUT} -t ${PARTYPE} ${_pDisk}"
+        aCmd="gpart add -a 4k ${SOUT} -t ${PARTYPE} ${_pDisk}"
       elif [ "${_pType}" = "gptslice" ]; then
         sleep 2
         aCmd="gpart add -a 4k ${SOUT} -t ${PARTYPE} ${_wSlice}"
@@ -646,14 +646,9 @@ new_gpart_partitions()
 
 
       # Increment our parts counter
-      if [ "$_pType" = "gpt" ] ; then
+      if [ "$_pType" = "gpt" -o "$_pType" = "newgpt" ] ; then
         CURPART=$(get_next_part "$_pDisk")
         # If this is a gpt partition,
-        # we can continue and skip the MBR part letter stuff
-        continue
-      elif [ "$_pType" = "newgpt" ] ; then
-        CURPART=$((CURPART+1))
-        # If this is a newgpt partition,
         # we can continue and skip the MBR part letter stuff
         continue
       elif [ "$_pType" = "apm" ] ; then
