@@ -421,7 +421,7 @@ stop_all_geli()
 setup_disk_slice()
 {
   # Delete any existing ZFS Pools with the same name as the desired pool
-  delete_old_zpool()
+  delete_old_zpool
   # Cleanup any slice / mirror dirs
   rm -rf ${SLICECFGDIR} >/dev/null 2>/dev/null
   mkdir ${SLICECFGDIR}
