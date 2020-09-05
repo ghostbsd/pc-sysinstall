@@ -684,6 +684,9 @@ init_extraction()
     livecd)
       start_extract_uzip_tar
       ;;
+    livezfs)
+      cpdup -i0 -s0 -vvv / ${FSMNT}/
+      ;;
     *) exit_err "ERROR: Unknown install medium" ;;
   esac
 

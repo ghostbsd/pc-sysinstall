@@ -226,12 +226,6 @@ unmount_all_filesystems_failure()
 # Script which stamps grub on the specified disks
 setup_grub()
 {
-  # Check for a custom beadm.install to copy before we run grub
-  if [ -e "/root/beadm.install" ] ; then
-     rc_halt "cp /root/beadm.install ${FSMNT}/root/beadm.install"
-     rc_halt "chmod 755 ${FSMNT}/root/beadm.install"
-  fi
-
   # Are we using GELI?
   if [ -e "${TMPDIR}/.grub-install-geli" ] ; then
      echo "GRUB_ENABLE_CRYPTODISK=y" >> ${FSMNT}/usr/local/etc/default/grub
@@ -303,11 +297,6 @@ setup_grub()
   # For some reason this returns non-0 on EFI, but works perfectly fine with no
   # warnings / errors, need to investigate further
   rc_nohalt "chroot ${FSMNT} grub-mkconfig -o /boot/grub/grub.cfg"
-
-  # Sleep and cleanup
-  if [ -e "${FSMNT}/root/beadm.install" ] ; then
-     rc_halt "rm ${FSMNT}/root/beadm.install"
-  fi
 };
 
 setup_efi_boot()
