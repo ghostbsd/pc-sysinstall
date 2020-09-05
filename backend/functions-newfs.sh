@@ -151,12 +151,12 @@ setup_filesystems()
 
       rc_halt "kldstat -v |grep -q g_eli || kldload geom_eli"
       if [ -e "${PARTDIR}-enc/${PART}-encpass" ] ; then
-	# Using a passphrase
+        # Using a passphrase
         rc_halt "geli init -g -b -J ${PARTDIR}-enc/${PART}-encpass ${PARTDEV}"
         rc_halt "geli attach -j ${PARTDIR}-enc/${PART}-encpass ${PARTDEV}"
-	touch ${TMPDIR}/.grub-install-geli
+        touch ${TMPDIR}/.grub-install-geli
       else
-	# No Encryption password, use key file
+        # No Encryption password, use key file
         rc_halt "dd if=/dev/random of=${GELIKEYDIR}/${PART}.key bs=64 count=1"
         rc_halt "geli init -g -b -s 4096 -P -K ${GELIKEYDIR}/${PART}.key ${PARTDEV}"
         rc_halt "geli attach -p -k ${GELIKEYDIR}/${PART}.key ${PARTDEV}"
