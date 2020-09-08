@@ -96,19 +96,23 @@ zfs_cleanup_unmount()
       # Check if we have multiple zfs mounts specified
       for ZMNT in `echo ${PARTMNT} | sed 's|,| |g'`
       do
-	ZMNT="`echo $ZMNT | cut -d '(' -f 1`"
+        ZMNT="`echo $ZMNT | cut -d '(' -f 1`"
         PARTMNTREV="${ZMNT} ${PARTMNTREV}"
       done
 
       for ZMNT in ${PARTMNTREV}
       do
-        if [ "${ZMNT}" = "/" ] ; then continue ; fi
-        # Some ZFS like /swap aren't mounted, and dont need unmounting
-        mount | grep -q "${FSMNT}${ZMNT}"
-	if [ $? -eq 0 ] ; then
-          echo_log "ZFS Unmount: ${ZPOOLNAME}${ZMNT}"
-          sleep 1
-          rc_halt "zfs unmount ${ZPOOLNAME}${ZMNT}"
+        if [ "${ZMNT}" = "/" ] ; then
+          rc_halt "zfs unmount ${ZPOOLNAME}/ROOT/${BENAME}"
+          rc_halt "zfs set mountpoint=${ZMNT} ${ZPOOLNAME}/ROOT/${BENAME}"
+        else
+          # Some ZFS like /swap aren't mounted, and dont need unmounting
+          mount | grep -q "${FSMNT}${ZMNT}"
+          if [ $? -eq 0 ] ; then
+            echo_log "ZFS Unmount: ${ZPOOLNAME}${ZMNT}"
+            sleep 1
+            rc_halt "zfs unmount ${ZPOOLNAME}${ZMNT}"
+          fi
           rc_halt "zfs set mountpoint=${ZMNT} ${ZPOOLNAME}${ZMNT}"
         fi
       done

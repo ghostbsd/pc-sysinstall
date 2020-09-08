@@ -60,7 +60,7 @@ mount_partition()
     for ZMNT in `echo ${MNTPOINT} | sed 's|,| |g'`
     do
       # Check for any ZFS specific mount options
-      ZMNTOPTS="`echo $ZMNT | cut -d '(' -f 2 | cut -d ')' -f 1`" 
+      ZMNTOPTS="`echo $ZMNT | cut -d '(' -f 2 | cut -d ')' -f 1`"
       if [ "$ZMNTOPTS" = "$ZMNT" ] ; then ZMNTOPTS="" ; fi
 
       # Reset ZMNT with options removed
@@ -83,7 +83,7 @@ mount_partition()
       done
 
       if [ "${ZMNT}" = "/" ] ; then
-	# If creating ZFS / dataset, give it name that beadm works with
+        # If creating ZFS / dataset, give it name that beadm works with
         ZNAME="/ROOT/${BENAME}"
         ZMKMNT=""
         echo_log "zfs create $zcopt -p ${ZPOOLNAME}/ROOT"
@@ -94,42 +94,43 @@ mount_partition()
         ZNAME="${ZMNT}"
         ZMKMNT="${ZMNT}"
 
-	# Lets check if we are missing any parent dataset
-	chkDir=`dirname $ZMNT`
-	mkParents=""
-	while
-	z=0
-	do
-		# Are we at the base dataset?
-		if [ "$chkDir" = "/" ]; then break ; fi
+        # Lets check if we are missing any parent dataset
+        # chkDir=`dirname $ZMNT`
+        # mkParents=""
+        # while
+        # z=0
+        # do
+        #   # Are we at the base dataset?
+        #   if [ "$chkDir" = "/" ]; then break ; fi
 
-		# Do we have this dataset?
-		zfs list | grep -q "^${ZPOOLNAME}${chkDir} "
-		if [ $? -eq 0 ]; then break ; fi
+        #   # Do we have this dataset?
+        #   zfs list | grep -q "^${ZPOOLNAME}${chkDir} "
+        #   if [ $? -eq 0 ]; then break ; fi
 
-		# Save this dataset to create
-		mkParents="$chkDir $mkParents"
+        #   # Save this dataset to create
+        #   mkParents="$chkDir $mkParents"
 
-		# Get the next dir to check
-		chkDir=`dirname $chkDir`
-	done
+        #   # Get the next dir to check
+        #   chkDir=`dirname $chkDir`
+        # done
 
-	# Any ZFS parent datasets to create?
-	if [ -n "$mkParents" ] ; then
-		for p in $mkParents
-		do
-			# Since the user didn't explictly specify this dataset
-			# we assume they don't really want it mounted
-			echo_log "zfs create -o canmount=off -p ${ZPOOLNAME}${p}"
-			rc_halt "zfs create -o canmount=off -p ${ZPOOLNAME}${p}"
-			rc_halt "zfs set mountpoint=none ${ZPOOLNAME}${p}"
-		done
-	fi
+        # # Any ZFS parent datasets to create?
+        # if [ -n "$mkParents" ] ; then
+        #   for p in $mkParents
+        #   do
+        #     # Since the user didn't explictly specify this dataset
+        #     # we assume they don't really want it mounted
+        #     echo_log "zfs create -o canmount=off -p ${ZPOOLNAME}${p}"
+        #     rc_halt "zfs create -o canmount=off -p ${ZPOOLNAME}${p}"
+        #     rc_halt "zfs set mountpoint= ${ZPOOLNAME}${p}"
+        #   done
+        # fi
 
-	# Create the target ZFS dataset now
+        # Create the target ZFS dataset now
         echo_log "zfs create $zcopt -p ${ZPOOLNAME}${ZNAME}"
         rc_halt "zfs create $zcopt -p ${ZPOOLNAME}${ZNAME}"
       fi
+
       if [ -z "$zcopt" ] ; then
         rc_halt "zfs set mountpoint=${FSMNT}${ZMKMNT} ${ZPOOLNAME}${ZNAME}"
       fi
@@ -153,6 +154,8 @@ mount_partition()
       for ZOPT in `echo $ZMNTOPTS | sed 's/|/ /g'`
       do
         echo "$ZOPT" | grep -q volsize
+        if [ $? -eq 0 ] ; then continue ; fi
+        echo "$ZOPT" | grep -q mountpoint
         if [ $? -eq 0 ] ; then continue ; fi
         rc_halt "zfs set $ZOPT ${ZPOOLNAME}${ZNAME}"
       done
@@ -183,12 +186,12 @@ mount_all_filesystems()
   #########################################################
   for PART in `ls ${PARTDIR}`
   do
-    PARTDEV=`echo $PART | sed 's|-|/|g'` 
+    PARTDEV=`echo $PART | sed 's|-|/|g'`
     PARTFS="`cat ${PARTDIR}/${PART} | cut -d '#' -f 1`"
     if [ ! -e "${PARTDEV}" -a "${PARTFS}" != "ZFS" ]
     then
       exit_err "ERROR: The partition ${PARTDEV} does not exist. Failure in bsdlabel?"
-    fi 
+    fi
 
     PARTMNT="`cat ${PARTDIR}/${PART} | cut -d '#' -f 2`"
     PARTENC="`cat ${PARTDIR}/${PART} | cut -d '#' -f 3`"
@@ -200,7 +203,7 @@ mount_all_filesystems()
       EXT=""
     fi
 
-    # Check for root partition for mounting, including ZFS "/,/usr" type 
+    # Check for root partition for mounting, including ZFS "/,/usr" type
     echo "$PARTMNT" | grep "/," >/dev/null
     if [ "$?" = "0" -o "$PARTMNT" = "/" ]
     then
@@ -225,8 +228,8 @@ mount_all_filesystems()
     if [ ! -e "${PARTDEV}" -a "${PARTFS}" != "ZFS" ]
     then
       exit_err "ERROR: The partition ${PARTDEV} does not exist. Failure in bsdlabel?"
-    fi 
-     
+    fi
+
     PARTMNT="`cat ${PARTDIR}/${PART} | cut -d '#' -f 2`"
     PARTENC="`cat ${PARTDIR}/${PART} | cut -d '#' -f 3`"
 
@@ -251,8 +254,8 @@ mount_all_filesystems()
          IMAGE)
            if [ ! -d "${PARTMNT}" ]
            then
-             mkdir -p "${PARTMNT}" 
-           fi 
+             mkdir -p "${PARTMNT}"
+           fi
            mount_partition ${PARTDEV} ${PARTFS} ${PARTMNT}
            ;;
          *) exit_err "ERROR: Got unknown file-system type $PARTFS" ;;
