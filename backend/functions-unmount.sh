@@ -328,6 +328,7 @@ setup_efi_boot()
     rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/BOOT"
     rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}"
 
+
     rc_nohalt "kldload efirt"
 
     # Check if efiLoader is specified
@@ -335,44 +336,76 @@ setup_efi_boot()
     EFILOADER="${VAL}"
     if [ -z "$EFILOADER" ] ; then EFILOADER="refind" ; fi
 
-    if [ -d '/root/refind' -a "$EFILOADER" = "refind" ] ; then
+    if [ -d '/usr/local/refind' -a "$EFILOADER" = "refind" ] ; then
       # We have refind on the install media, lets use that for dual-boot purposes
-      rc_halt "cp /root/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-REFIND.EFI"
-      rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/REFIND.CONF"
-      rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/ICONS"
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
-      EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-REFIND.EFI"
-      EFILABEL="${SYSTEM}-rEFInd"
+      rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/refind"
+      rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
+      rc_halt "cp /usr/local/refind/refind.conf ${FSMNT}/boot/efi/EFI/refind/REFIND.CONF"
+      rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/refind/ICONS"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/ghostbsd/BOOTX64.EFI"
+      REFINDEFIFILE="${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
+      REFINDEFILABEL="${SYSTEM}-rEFInd"
+      EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
+      EFILABEL="${SYSTEM}"
+
+      # Check if this label already exists and delete if so
+      REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$REFINDEFINUM" ] ; then
+        rc_nohalt "efibootmgr -B $REFINDEFINUM"
+      fi
+
+      # Create the new REFINDEFI entry
+      rc_halt "efibootmgr -c -l $REFINDEFIFILE -L $REFINDEFILABEL"
+      #Try to activate this new entry
+      REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$REFINDEFINUM" ] ; then
+        rc_nohalt "efibootmgr -a $REFINDEFINUM" #activate it
+        rc_nohalt "efibootmgr -n $REFINDEFINUM" #Set it as the next boot default
+      fi
+
+      # Check if this label already exists and delete if so
+      REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$REFINDEFINUM" ] ; then
+        rc_nohalt "efibootmgr -B $REFINDEFINUM"
+      fi
+
+      # Create the new EFI entry
+      rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
+      #Try to activate this new entry
+      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$EFINUM" ] ; then
+        rc_nohalt "efibootmgr -a $EFINUM" #activate it
+        rc_nohalt "efibootmgr -n $EFINUM" #Set it as the next boot default
+      fi
     else
       # BSD Loader only
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
-      EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64-${UPPERCASE_SYSTEM}.EFI"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
+      EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
       EFILABEL="${SYSTEM}"
+      # Check if this label already exists and delete if so
+      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$EFINUM" ] ; then
+        rc_nohalt "efibootmgr -B $EFINUM"
+      fi
+
+      # Create the new EFI entry
+      rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
+      #Try to activate this new entry
+      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$EFINUM" ] ; then
+        rc_nohalt "efibootmgr -a $EFINUM" #activate it
+        rc_nohalt "efibootmgr -n $EFINUM" #Set it as the next boot default
+      fi
     fi
 
     # Now ensure the fallback location for the EFI boot partition exists, and make it if needed
-    if [ -d '/root/refind' -a "$EFILOADER" = "refind" ] ; then
+    if [ -d '/usr/local/refind' -a "$EFILOADER" = "refind" ] ; then
       # We have refind on the install media, lets use that for dual-boot purposes
-      rc_halt "cp /root/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
-      rc_halt "cp -r /root/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
-      rc_halt "cp /root/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
+      rc_halt "cp /usr/local/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
+      rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
+      rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
     else
       rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
-    fi
-
-    # Check if this label already exists and delete if so
-    EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
-    if [ -n "$EFINUM" ] ; then
-      rc_nohalt "efibootmgr -B $EFINUM"
-    fi
-
-    # Create the new EFI entry
-    rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
-    #Try to activate this new entry
-    EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
-    if [ -n "$EFINUM" ] ; then
-      rc_nohalt "efibootmgr -a $EFINUM" #activate it
-      rc_nohalt "efibootmgr -n $EFINUM" #Set it as the next boot default
     fi
 
     # Cleanup

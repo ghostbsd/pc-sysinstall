@@ -340,7 +340,7 @@ setup_hostname()
 
   # Set the hostname now
   echo_log "Setting hostname: ${HOSTNAME}"
-  echo "hostname=\"${HOSTNAME}\"" >> ${FSMNT}/etc/rc.conf
+  sysrc -f /etc/rc.conf hostname="${HOSTNAME}"
   sed -i -e "s|my.domain|${HOSTNAME} ${HOSTNAME}|g" ${FSMNT}/etc/hosts
 
 };
