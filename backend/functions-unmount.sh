@@ -328,7 +328,6 @@ setup_efi_boot()
     rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/BOOT"
     rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}"
 
-
     rc_nohalt "kldload efirt"
 
     # Check if efiLoader is specified
@@ -342,12 +341,28 @@ setup_efi_boot()
       rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
       rc_halt "cp /usr/local/refind/refind.conf ${FSMNT}/boot/efi/EFI/refind/REFIND.CONF"
       rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/refind/ICONS"
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/ghostbsd/BOOTX64.EFI"
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
       REFINDEFIFILE="${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
-      REFINDEFILABEL="${SYSTEM}-rEFInd"
+      REFINDEFILABEL="rEFInd"
       EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
       EFILABEL="${SYSTEM}"
 
+      # Set GhostBSD active
+      # Check if this label already exists and delete if so
+      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$EFINUM" ] ; then
+        rc_nohalt "efibootmgr -B $EFINUM"
+      fi
+
+      # Create the new EFI entry
+      rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
+      #Try to activate this new entry
+      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
+      if [ -n "$EFINUM" ] ; then
+        rc_nohalt "efibootmgr -a $EFINUM" #activate it
+      fi
+
+      # Set refind active and to boot on next boot
       # Check if this label already exists and delete if so
       REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
       if [ -n "$REFINDEFINUM" ] ; then
@@ -361,21 +376,6 @@ setup_efi_boot()
       if [ -n "$REFINDEFINUM" ] ; then
         rc_nohalt "efibootmgr -a $REFINDEFINUM" #activate it
         rc_nohalt "efibootmgr -n $REFINDEFINUM" #Set it as the next boot default
-      fi
-
-      # Check if this label already exists and delete if so
-      REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
-      if [ -n "$REFINDEFINUM" ] ; then
-        rc_nohalt "efibootmgr -B $REFINDEFINUM"
-      fi
-
-      # Create the new EFI entry
-      rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
-      #Try to activate this new entry
-      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
-      if [ -n "$EFINUM" ] ; then
-        rc_nohalt "efibootmgr -a $EFINUM" #activate it
-        rc_nohalt "efibootmgr -n $EFINUM" #Set it as the next boot default
       fi
     else
       # BSD Loader only
