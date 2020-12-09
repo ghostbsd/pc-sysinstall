@@ -241,16 +241,20 @@ setup_fstab()
   if [ "$INSTALLTYPE" != "FreeBSD" ]
   then
     echo "procfs			/proc			procfs		rw		0	0" >> ${FSTAB}
+    # All the config below is for Linux support
     echo "linprocfs		/compat/linux/proc	linprocfs	rw		0	0" >> ${FSTAB}
     if [ ! -d "${FSMNT}/compat/linux/proc" ] ; then
       mkdir -p ${FSMNT}/compat/linux/proc
     fi
-    if [ "$INSTALLTYPE" = "GhostBSD" ] ; then
-      echo "tmpfs /compat/linux/dev/shm tmpfs rw,mode=1777 0 0" >> ${FSTAB}
-      if [ ! -d "${FSMNT}/compat/linux/dev/shm" ] ; then
-        mkdir -p ${FSMNT}/compat/linux/dev/shm
-      fi
+    echo "tmpfs /compat/linux/dev/shm tmpfs rw,mode=1777 0 0" >> ${FSTAB}
+    if [ ! -d "${FSMNT}/compat/linux/dev/shm" ] ; then
+      mkdir -p ${FSMNT}/compat/linux/dev/shm
     fi
+    echo "linsysfs /compat/linux/sys linsysfs rw 0 0" >> ${FSTAB}
+    if [ ! -d "${FSMNT}/compat/linux/sys" ] ; then
+      mkdir -p ${FSMNT}/compat/linux/sys
+    fi
+    echo "fdesc /dev/fd fdescfs rw 0 0" >> ${FSTAB}
   fi
 
   # If we have a dedicated /boot, run the post-install setup of it now
