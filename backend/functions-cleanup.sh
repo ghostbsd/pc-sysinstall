@@ -47,9 +47,6 @@ zfs_cleanup_unmount()
       do
         if [ "${ZMNT}" = "/" ]
         then
-          # Make sure we haven't already added the zfs boot line when
-          # Creating a dedicated "/boot" partition
-          echo "vfs.root.mountfrom=\"zfs:${ZPOOLNAME}/ROOT/${BENAME}\"" >> ${FSMNT}/boot/loader.conf
           export FOUNDZFSROOT="${ZPOOLNAME}"
         fi
       done
