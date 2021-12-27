@@ -160,10 +160,10 @@ setup_zfs_mirror_parts()
       # If GELI is enabled
       if [ "$ENC" = "ON" ] ; then
         _nZFS="$_nZFS ${_zvars}p2.eli"
-        rc_nohalt "zpool label clear ${_zvars}p2.eli"
+        rc_nohalt "zpool labelclear -f ${_zvars}p2.eli"
       else
         _nZFS="$_nZFS ${_zvars}p2"
-        rc_nohalt "zpool label clear ${_zvars}p2"
+        rc_nohalt "zpool labelclear -f ${_zvars}p2"
       fi
     else
       _nZFS="$_nZFS ${_zvars}"
@@ -579,10 +579,10 @@ new_gpart_partitions()
         sleep 2
         aCmd="gpart add -a 4k ${SOUT} -t ${PARTYPE} ${_wSlice}"
       fi
-
       # Run the gpart add command now
       rc_halt "$aCmd"
-
+      # Clear pool label
+      zpool_labelclear_from_rc_halt
       # Check if we need to clone this layout to a ZFS mirror/raidz disk
       if [ -n "$ZFS_CLONE_DISKS" ] ; then
         for zC in $ZFS_CLONE_DISKS

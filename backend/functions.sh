@@ -148,7 +148,8 @@ rc_halt()
   sleep 0.01
 
   echo "Running: ${CMD}" >>${LOGOUT}
-  eval ${CMD} >>${LOGOUT} 2>>${LOGOUT}
+  eval ${CMD} >${TMPDIR}/rc_halt 2>${TMPDIR}/rc_halt
+  cat ${TMPDIR}/rc_halt >>${LOGOUT} 2>>${LOGOUT}
   STATUS="$?"
   if [ "${STATUS}" != "0" ]
   then
@@ -189,6 +190,13 @@ rc_nohalt_echo()
   echo "Running: ${CMD}" >>${LOGOUT}
   ${CMD} 2>&1 | tee -a ${LOGOUT}
 
+};
+
+
+zpool_labelclear_from_rc_halt()
+{
+  partition=$(cat ${TMPDIR}/rc_halt | grep 'added' | cut -d ' ' -f 1)
+  rc_nohalt "zpool labelclear -f ${partition}"
 };
 
 # Echo to the screen and to the log

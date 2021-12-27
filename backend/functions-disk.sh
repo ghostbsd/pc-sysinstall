@@ -515,7 +515,7 @@ setup_disk_slice()
       if [ "${PTYPE}" = "free" ]
       then
         # Lets figure out what number this slice will be
-	gDISK=`echo $DISK | sed 's|/dev/||g'`
+        gDISK=`echo $DISK | sed 's|/dev/||g'`
         LASTSLICE="`gpart show ${gDISK} \
           | grep -v ${gDISK} \
           | grep -v ' free' \
@@ -531,14 +531,14 @@ setup_disk_slice()
         fi
 
         # Set if we are doing GPT/MBR
-	gpart show $gDISK | grep -q "GPT"
+        gpart show $gDISK | grep -q "GPT"
         if [ $? -eq 0 ] ; then
           LASTSLICETYPE="GPT"
         else
           LASTSLICETYPE="MBR"
         fi
         # Set that we are doing free space only
-	FREESPACEINSTALL="1"
+        FREESPACEINSTALL="1"
       fi
     fi
 
@@ -585,12 +585,12 @@ setup_disk_slice()
       # Found our flag to commit this disk setup / lets do sanity check and do it
       if [ ! -z "${DISK}" -a ! -z "${PTYPE}" ]
       then
-	# Make sure we are only installing ppc to full disk
-	if [ `uname -m` = "powerpc" -o `uname -m` = "powerpc64" ]; then
-	  if [ "$PTYPE" != "all" ] ; then
-	    exit_err "powerpc can only be installed to a full disk"
-	  fi
-	fi
+        # Make sure we are only installing ppc to full disk
+        if [ `uname -m` = "powerpc" -o `uname -m` = "powerpc64" ]; then
+          if [ "$PTYPE" != "all" ] ; then
+            exit_err "powerpc can only be installed to a full disk"
+          fi
+        fi
 
         case ${PTYPE} in
           all)
@@ -599,12 +599,12 @@ setup_disk_slice()
               # Default to round-robin if the user didn't specify
               if [ -z "$MIRRORBAL" ]; then MIRRORBAL="round-robin" ; fi
 
-	      _mFile=`echo $DISK | sed 's|/|%|g'`
-              echo "$MIRRORDISK:$MIRRORBAL:gm${gmnum}" >${MIRRORCFGDIR}/$_mFile
-	      init_gmirror "$gmnum" "$MIRRORBAL" "$DISK" "$MIRRORDISK"
+              _mFile=`echo $DISK | sed 's|/|%|g'`
+                    echo "$MIRRORDISK:$MIRRORBAL:gm${gmnum}" >${MIRRORCFGDIR}/$_mFile
+              init_gmirror "$gmnum" "$MIRRORBAL" "$DISK" "$MIRRORDISK"
 
-	      # Reset DISK to the gmirror device
-	      DISK="/dev/mirror/gm${gmnum}"
+              # Reset DISK to the gmirror device
+              DISK="/dev/mirror/gm${gmnum}"
               gmnum=$((gmknum+1))
             fi
 
@@ -615,11 +615,11 @@ setup_disk_slice()
               tmpSLICE="${DISK}s1"
             fi
 
-	    if [ `uname -m` = "powerpc" -o `uname -m` = "powerpc64" ]
-	    then
-              PSCHEME="APM"
-              tmpSLICE="${DISK}s1"
-	    fi
+            if [ `uname -m` = "powerpc" -o `uname -m` = "powerpc64" ]
+            then
+                    PSCHEME="APM"
+                    tmpSLICE="${DISK}s1"
+            fi
 
             run_gpart_full "${DISK}" "${BMANAGER}" "${PSCHEME}"
             ;;
@@ -639,16 +639,16 @@ setup_disk_slice()
             ;;
 
           free)
-	    # We can't take for granted what
-	    # the next partition number is. It could be
-	    # something in-between other partitions
-	    LASTSLICE=$(get_next_part "$DISK")
+            # We can't take for granted what
+            # the next partition number is. It could be
+            # something in-between other partitions
+            LASTSLICE=$(get_next_part "$DISK")
             run_gpart_free "${DISK}" "${LASTSLICE}" "${BMANAGER}"
             gpart show ${DISK} | head -n 1 | grep -q MBR
             if [ $? -eq 0 ] ; then
               tmpSLICE="${DISK}s${LASTSLICE}"
-	    else
-	      if [ $LASTSLICE -eq 1 ] ; then
+            else
+              if [ $LASTSLICE -eq 1 ] ; then
                 tmpSLICE="${DISK}p2"
               else
                 tmpSLICE="${DISK}p${LASTSLICE}"
@@ -667,25 +667,25 @@ setup_disk_slice()
         esac
 
 
-		if [ -n "${IMAGE}" ]
-		then
+        if [ -n "${IMAGE}" ]
+        then
           local DEST
 
-		  if [ -n "${tmpSLICE}" ]
+          if [ -n "${tmpSLICE}" ]
           then
-			DEST="${tmpSLICE}"
+            DEST="${tmpSLICE}"
           else
-			DEST="${DISK}"
+            DEST="${DISK}"
           fi
 
           write_image "${IMAGE}" "${DEST}"
           check_disk_layout "${DEST}"
-		fi
+        fi
 
         # Now save which disk<num> this is, so we can parse it later during slice partition setup
         if [ -z "${IMAGE}" ]
         then
-	  _sFile=`echo $tmpSLICE | sed 's|/|-|g'`
+          _sFile=`echo $tmpSLICE | sed 's|/|-|g'`
           echo "disk${disknum}" >${SLICECFGDIR}/$_sFile
         fi
 
@@ -809,8 +809,10 @@ init_gpt_full_disk()
     if [ "${_intBOOT}" = "GRUB" ] ; then
       # Doing bios-boot partition
       rc_halt "gpart add -a 4k -s 1M -t bios-boot ${_intDISK}"
+      rc_nohalt "zpool labelclear -f ${_intDISK}p1"
     else
       rc_halt "gpart add -a 4k -s 512 -t freebsd-boot ${_intDISK}"
+      rc_nohalt "zpool labelclear -f ${_intDISK}p1"
       echo_log "Stamping boot sector on ${_intDISK}"
       rc_halt "gpart bootcode -b /boot/pmbr ${_intDISK}"
     fi
@@ -931,7 +933,6 @@ run_gpart_gpt_part()
     fi
   else
     if [ "$BOOTMODE" != "UEFI" ] ; then
-      # Setting boot for GhostBSD utile grub support is part of the Project.
       rc_halt "gpart bootcode -b /boot/pmbr ${DISK}"
     fi
   fi
