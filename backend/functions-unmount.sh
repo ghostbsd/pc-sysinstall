@@ -142,6 +142,7 @@ unmount_all_filesystems()
   then
     rc_halt "zfs set mountpoint=legacy ${FOUNDZFSROOT}"
     rc_halt "zfs set mountpoint=/ ${FOUNDZFSROOT}/ROOT/${BENAME}"
+    rc_halt "zfs set canmount=noauto ${FOUNDZFSROOT}/ROOT/${BENAME}"
   fi
 
   # If we need to relabel "/" do it now
