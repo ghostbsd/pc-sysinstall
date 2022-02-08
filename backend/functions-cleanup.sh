@@ -102,6 +102,7 @@ zfs_cleanup_unmount()
         if [ "${ZMNT}" = "/" ] ; then
           rc_halt "zfs unmount ${ZPOOLNAME}/ROOT/${BENAME}"
           rc_halt "zfs set mountpoint=${ZMNT} ${ZPOOLNAME}/ROOT/${BENAME}"
+          rc_halt "zfs set canmount=noauto ${ZPOOLNAME}/ROOT/${BENAME}"
         else
           # Some ZFS like /swap aren't mounted, and dont need unmounting
           mount | grep -q "${FSMNT}${ZMNT}"
