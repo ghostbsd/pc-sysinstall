@@ -235,25 +235,21 @@ setup_fstab()
     fi # End of ZFS Check
   done
 
-  # Setup some specific TrueOS fstab options
-  if [ "$INSTALLTYPE" != "FreeBSD" ]
-  then
-    echo "procfs			/proc			procfs		rw		0	0" >> ${FSTAB}
-    # All the config below is for Linux support
-    echo "linprocfs		/compat/linux/proc	linprocfs	rw		0	0" >> ${FSTAB}
-    if [ ! -d "${FSMNT}/compat/linux/proc" ] ; then
-      mkdir -p ${FSMNT}/compat/linux/proc
-    fi
-    echo "tmpfs /compat/linux/dev/shm tmpfs rw,mode=1777 0 0" >> ${FSTAB}
-    if [ ! -d "${FSMNT}/compat/linux/dev/shm" ] ; then
-      mkdir -p ${FSMNT}/compat/linux/dev/shm
-    fi
-    echo "linsysfs /compat/linux/sys linsysfs rw 0 0" >> ${FSTAB}
-    if [ ! -d "${FSMNT}/compat/linux/sys" ] ; then
-      mkdir -p ${FSMNT}/compat/linux/sys
-    fi
-    echo "fdesc /dev/fd fdescfs rw 0 0" >> ${FSTAB}
+  echo "procfs			/proc			procfs		rw		0	0" >> ${FSTAB}
+  # All the config below is for Linux support
+  echo "linprocfs		/compat/linux/proc	linprocfs	rw		0	0" >> ${FSTAB}
+  if [ ! -d "${FSMNT}/compat/linux/proc" ] ; then
+    mkdir -p ${FSMNT}/compat/linux/proc
   fi
+  echo "tmpfs /tmp tmpfs rw,mode=1777 0 0" >> ${FSTAB}
+  if [ ! -d "${FSMNT}/compat/linux/dev/shm" ] ; then
+    mkdir -p ${FSMNT}/compat/linux/dev/shm
+  fi
+  echo "linsysfs /compat/linux/sys linsysfs rw 0 0" >> ${FSTAB}
+  if [ ! -d "${FSMNT}/compat/linux/sys" ] ; then
+    mkdir -p ${FSMNT}/compat/linux/sys
+  fi
+  echo "fdesc /dev/fd fdescfs rw 0 0" >> ${FSTAB}
 
   # If we have a dedicated /boot, run the post-install setup of it now
   if [ ! -z "${BOOTMNT}" ] ; then
