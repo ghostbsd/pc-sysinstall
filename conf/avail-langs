@@ -1,65 +1,42 @@
-en English
-af Afrikaans
-ar العربية
-az Azərbaycanca
-eu Euskara
-bn বাংলা
-bs Bosanski
-bg български език
-ca Catalan
+en_US English
+af_ZA Afrikaans
+ar_SA العربية
+bg_BG български език
+ca_ES català
+cs_CZ čeština
+da_DK Dansk
+de_DE Deutsch
+el_GR ελληνικά
+en_GB English (United Kingdom)
+es_ES Spanish
+eu_ES Euskara
+fi_FI Suomi
+fr_FR Français
+fr_CA Français (Canada)
+he_IL עִבְרִית
+hi_IN मानक हिन्दी
+hr_HR Hrvatski jezik
+hu_HU Magyar
+is_IS íslenska
+it_IT Italiano
+ja_JP 日本語
+ko_KR 한국어
+lt_LT Lietuvių kalba
+lv_LV Latviešu valoda
+mn_MN Монгол хэл
+nb_NO Norwegian Bokmål
+nl_NL Nederlands
+pl_PL Język polski
+pt_PT Língua portuguesa
+pt_BR Língua portuguesa Brazil
+ro_RO Daco-Romanian
+ru_RU русский язык
+sk_SK Slovenčina
+sl_SI Slovenski jezik
+sr_RS српски
+pt_PT Svenska
+tr_TR Türkçe
+uk_UA Украї́нська мoва
 zh_CN 汉语/漢語
 zh_HK 汉语/漢語 香港
 zh_TW 汉语/漢語 臺灣
-hr Hrvatski jezik
-cs čeština
-da Dansk
-nl Nederlands
-en_ZA English South Africa
-en_GB English UK
-ee Eesti Keel
-fi Suomi
-fr Français
-fr_CA Français canadien
-fur Furlan
-gl ɡəˈlɪʃən
-ka ქართული ენა
-de Deutsch
-el ελληνικά
-he עִבְרִית
-hi मानक हिन्दी
-hu Magyar
-is íslenska
-id Bahasa Indonesia
-it Italiano
-ja 日本語
-ko 한국어
-lv Latviešu valoda
-lt Lietuvių kalba
-mk македонски јазик
-ms Bahasa Melayu
-mt Malti
-mn Монгол хэл
-ne नेपाली
-nb Norwegian Bokmål
-fa فارسی
-pl Język polski
-pt Língua portuguesa
-pt_BR Língua portuguesa Brazil
-pa ਪੰਜਾਬੀ
-ro Daco-Romanian
-ru русский язык
-sa संस्कृतम् 
-sr српски
-sk Slovenčina
-sl Slovenski jezik
-es Spanish
-sw Kiswahili
-sv Svenska
-tg زبان فارسی
-ta தமிழ்
-th ภาษาไทย
-tr Türkçe
-uk Украї́нська мoва
-vi Tiếng Việt
-cy Cymraeg
-zu IsiZulu

@@ -36,33 +36,13 @@
 # Function which localizes a FreeBSD install
 localize_freebsd()
 {
-  sed -i.bak "s/lang=en_US/lang=${LOCALE}/g" ${FSMNT}/etc/login.conf
+  sed -i.bak "s/lang=C/lang=${LOCALE}/g" ${FSMNT}/etc/login.conf
   rm ${FSMNT}/etc/login.conf.bak
   sed -i '' "s/en_US/${LOCALE}/g" ${FSMNT}/etc/profile
   sed -i '' "s/en_US/${LOCALE}/g" ${FSMNT}/usr/share/skel/dot.profile
 };
 
 localize_x_desktops() {
-
-  # Check for and customize KDE lang
-  ##########################################################################
-
-  # Check if we can localize KDE via skel
-  if [ -e "${FSMNT}/usr/share/skel/.kde4/share/config/kdeglobals" ] ; then
-    sed -i '' "s/Country=us/Country=${COUNTRY}/g" ${FSMNT}/usr/share/skel/.kde4/share/config/kdeglobals
-    sed -i '' "s/Country=us/Country=${COUNTRY}/g" ${FSMNT}/root/.kde4/share/config/kdeglobals
-    sed -i '' "s/Language=en_US/Language=${SETLANG}:${LOCALE}/g" ${FSMNT}/usr/share/skel/.kde4/share/config/kdeglobals
-  fi
-
-  # Check if we have a KDE root config
-  if [ -e "${FSMNT}/root/.kde4/share/config/kdeglobals" ] ; then
-    sed -i '' "s/Language=en_US/Language=${SETLANG}:${LOCALE}/g" ${FSMNT}/root/.kde4/share/config/kdeglobals
-  fi
-
-  # Check for KDM
-  if [ -e "${FSMNT}/usr/local/kde4/share/config/kdm/kdmrc" ] ; then
-    sed -i '' "s/Language=en_US/Language=${LOCALE}.UTF-8/g" ${FSMNT}/usr/local/kde4/share/config/kdm/kdmrc
-  fi
 
   # Check for and customize GNOME / GDM lang
   ##########################################################################
@@ -105,17 +85,7 @@ localize_x_keyboard()
   KEYMOD="$1"
   KEYLAY="$2"
   KEYVAR="$3"
-  COUNTRY="$4"
   OPTION="grp:alt_shift_toggle"
-  SETXKBMAP=""
-
-  if [ "${COUNTRY}" = "NONE" -o "${COUNTRY}" = "us" -o "${COUNTRY}" = "C" ] ; then
-    #In this case we don't need any additional language
-    COUNTRY=""
-    OPTION=""
-  else
-    COUNTRY=",${COUNTRY}"
-  fi
 
   if [ "${KEYMOD}" != "NONE" ] ; then
     SETXKBMAP="-model ${KEYMOD}"
@@ -138,33 +108,23 @@ localize_x_keyboard()
 
   if [ "${KEYVAR}" != "NONE" ] ; then
     SETXKBMAP="${SETXKBMAP} -variant ${KEYVAR}"
-    KXVAR="(${KEYVAR})"
     if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/90_org.gnome.desktop.input-sources.gschema.override ] ; then
       sed -i '' "s/+std/+${KEYVAR}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/90_org.gnome.desktop.input-sources.gschema.override
       run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
     fi
-  else
-    KXVAR=""
   fi
-
-
 
   # Setup .xprofile with our setxkbmap call now
   if [ ! -z "${SETXKBMAP}" ] ; then
     if [ ! -e "${FSMNT}/usr/share/skel/.xprofile" ]
     then
-      echo "#!/bin/sh" >${FSMNT}/usr/share/skel/.xprofile
+      echo "#!/bin/sh" > ${FSMNT}/usr/share/skel/.xprofile
     fi
 
     # Save the keyboard layout for user / root X logins
     echo "setxkbmap ${SETXKBMAP}" >>${FSMNT}/usr/share/skel/.xprofile
     chmod 755 ${FSMNT}/usr/share/skel/.xprofile
     cp ${FSMNT}/usr/share/skel/.xprofile ${FSMNT}/root/.xprofile
-
-    # Save it for KDM
-    if [ -e "${FSMNT}/usr/local/kde4/share/config/kdm/Xsetup" ] ; then
-      echo "setxkbmap ${SETXKBMAP}" >> ${FSMNT}/usr/local/kde4/share/config/kdm/Xsetup
-    fi
 
     # Save it for lightdm
     if [ -f ${FSMNT}/usr/local/etc/lightdm/lightdm.conf ] ; then
@@ -188,21 +148,6 @@ localize_x_keyboard()
       sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
       sed -i '' "s/value="\"""\""/value="\""${KEYVAR}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
     fi
-  fi
-
-  # Create the kxkbrc configuration using these options
-  if [ -d "${FSMNT}/usr/share/skel/.kde4/share/config" ] ; then
-    echo "[Layout]
-DisplayNames=${KXLAYOUT}${COUNTRY}
-IndicatorOnly=false
-LayoutList=${KXLAYOUT}${KXVAR}${COUNTRY}
-Model=${KXMODEL}
-Options=${OPTION}
-ResetOldOptions=true
-ShowFlag=true
-ShowSingle=false
-SwitchMode=WinClass
-Use=true " >${FSMNT}/usr/share/skel/.kde4/share/config/kxkbrc
   fi
 
 };
@@ -262,213 +207,6 @@ localize_prune_langs()
 
 };
 
-# Function which sets COUNTRY SETLANG and LOCALE based upon $1
-localize_get_codes()
-{
-  TARGETLANG="${1}"
-  # Setup the presets for the specific lang
-  case $TARGETLANG in
-    af)
-      COUNTRY="C"
-      SETLANG="af"
-      LOCALE="af_ZA"
-      ;;
-    ar)
-      COUNTRY="C"
-      SETLANG="ar"
-      LOCALE="en_US"
-      ;;
-    az)
-      COUNTRY="C"
-      SETLANG="az"
-      LOCALE="en_US"
-      ;;
-    ca)
-      COUNTRY="es"
-      SETLANG="es:ca"
-      LOCALE="ca_ES"
-      ;;
-    be)
-      COUNTRY="be"
-      SETLANG="be"
-      LOCALE="be_BY"
-      ;;
-    bn)
-      COUNTRY="bn"
-      SETLANG="bn"
-      LOCALE="en_US"
-      ;;
-    bg)
-      COUNTRY="bg"
-      SETLANG="bg"
-      LOCALE="bg_BG"
-      ;;
-    cs)
-      COUNTRY="cz"
-      SETLANG="cs"
-      LOCALE="cs_CZ"
-      ;;
-    da)
-      COUNTRY="dk"
-      SETLANG="da"
-      LOCALE="da_DK"
-      ;;
-    de)
-      COUNTRY="de"
-      SETLANG="de"
-      LOCALE="de_DE"
-      ;;
-    en_GB)
-      COUNTRY="gb"
-      SETLANG="en_GB:cy"
-      LOCALE="en_GB"
-      ;;
-    el)
-      COUNTRY="gr"
-      SETLANG="el:gr"
-      LOCALE="el_GR"
-      ;;
-    es)
-      COUNTRY="es"
-      SETLANG="es"
-      LOCALE="es_ES"
-      ;;
-    es_LA)
-      COUNTRY="us"
-      SETLANG="es:en_US"
-      LOCALE="es_ES"
-      ;;
-    et)
-      COUNTRY="ee"
-      SETLANG="et"
-      LOCALE="et_EE"
-      ;;
-    fr)
-      COUNTRY="fr"
-      SETLANG="fr"
-      LOCALE="fr_FR"
-      ;;
-    fr_CA)
-      COUNTRY="ca"
-      SETLANG="fr_CA"
-      LOCALE="fr_CA"
-      ;;
-    he)
-      COUNTRY="il"
-      SETLANG="he:ar"
-      LOCALE="he_IL"
-      ;;
-    hr)
-      COUNTRY="hr"
-      SETLANG="hr"
-      LOCALE="hr_HR"
-      ;;
-    hu)
-      COUNTRY="hu"
-      SETLANG="hu"
-      LOCALE="hu_HU"
-      ;;
-    it)
-      COUNTRY="it"
-      SETLANG="it"
-      LOCALE="it_IT"
-      ;;
-    ja)
-      COUNTRY="jp"
-      SETLANG="ja"
-      LOCALE="ja_JP"
-      ;;
-    ko)
-      COUNTRY="kr"
-      SETLANG="ko"
-      LOCALE="ko_KR"
-      ;;
-    nl)
-      COUNTRY="nl"
-      SETLANG="nl"
-      LOCALE="nl_NL"
-      ;;
-    nn)
-      COUNTRY="no"
-      SETLANG="nn"
-      LOCALE="en_US"
-      ;;
-    pa)
-      COUNTRY="pa"
-      SETLANG="pa"
-      LOCALE="en_US"
-      ;;
-    pl)
-      COUNTRY="pl"
-      SETLANG="pl"
-      LOCALE="pl_PL"
-      ;;
-    pt)
-      COUNTRY="pt"
-      SETLANG="pt"
-      LOCALE="pt_PT"
-      ;;
-    pt_BR)
-      COUNTRY="br"
-      SETLANG="pt_BR"
-      LOCALE="pt_BR"
-      ;;
-    ro)
-      COUNTRY="ro"
-      SETLANG="ro_RO"
-      LOCALE="ro_RO"
-      ;;
-    ru)
-      COUNTRY="ru"
-      SETLANG="ru"
-      LOCALE="ru_RU"
-      ;;
-    sl)
-      COUNTRY="si"
-      SETLANG="sl"
-      LOCALE="sl_SI"
-      ;;
-    sk)
-      COUNTRY="sk"
-      SETLANG="sk"
-      LOCALE="sk_SK"
-      ;;
-    sv)
-      COUNTRY="se"
-      SETLANG="sv"
-      LOCALE="sv_SE"
-      ;;
-    uk)
-      COUNTRY="ua"
-      SETLANG="uk"
-      LOCALE="uk_UA"
-      ;;
-    vi)
-      COUNTRY="vn"
-      SETLANG="vi"
-      LOCALE="en_US"
-      ;;
-    zh_CN)
-      COUNTRY="cn"
-      SETLANG="zh_CN"
-      LOCALE="zh_CN"
-      ;;
-    zh_TW)
-      COUNTRY="tw"
-      SETLANG="zh_TW"
-      LOCALE="zh_TW"
-      ;;
-    *)
-      COUNTRY="C"
-      SETLANG="${TARGETLANG}"
-      LOCALE="en_US"
-      ;;
-  esac
-
-  export COUNTRY SETLANG LOCALE
-
-};
-
 # Function which sets the timezone on the system
 set_timezone()
 {
@@ -518,7 +256,8 @@ run_localize()
 
       # Set our country / lang / locale variables
       get_value_from_string "$line"
-      localize_get_codes ${VAL}
+      LOCALE=${VAL}
+      export LOCALE
 
       get_value_from_string "$line"
       # If we are doing TrueOS install, localize it as well as FreeBSD base
@@ -573,7 +312,7 @@ run_localize()
 
   if [ "${INSTALLTYPE}" != "FreeBSD" ] ; then
     # Do our X keyboard localization
-    localize_x_keyboard "${KEYMOD}" "${KEYLAYOUT}" "${KEYVAR}" "${COUNTRY}"
+    localize_x_keyboard "${KEYMOD}" "${KEYLAYOUT}" "${KEYVAR}"
   fi
 
   # Check if we want to prunt any other KDE lang files to save some disk space
