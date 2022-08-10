@@ -36,8 +36,7 @@
 # Function which localizes a FreeBSD install
 localize_freebsd()
 {
-  sed -i.bak "s/lang=C/lang=${LOCALE}/g" ${FSMNT}/etc/login.conf
-  rm ${FSMNT}/etc/login.conf.bak
+  sed -i '' "s/lang=C/lang=${LOCALE}/g" ${FSMNT}/etc/login.conf
   sed -i '' "s/en_US/${LOCALE}/g" ${FSMNT}/etc/profile
   sed -i '' "s/en_US/${LOCALE}/g" ${FSMNT}/usr/share/skel/dot.profile
 };
@@ -85,7 +84,7 @@ localize_x_keyboard()
   KEYMOD="$1"
   KEYLAY="$2"
   KEYVAR="$3"
-  OPTION="grp:alt_shift_toggle"
+  OPTION="grp\\tgrp:alt_shift_toggle"
 
   if [ "${KEYMOD}" != "NONE" ] ; then
     SETXKBMAP="-model ${KEYMOD}"
@@ -98,20 +97,12 @@ localize_x_keyboard()
     localize_key_layout "$KEYLAY"
     SETXKBMAP="${SETXKBMAP} -layout ${KEYLAY}"
     KXLAYOUT="${KEYLAY}"
-    if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/90_org.gnome.desktop.input-sources.gschema.override ] ; then
-      sed -i '' "s/'us+/'${KEYLAY}+/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/90_org.gnome.desktop.input-sources.gschema.override
-      run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
-    fi
   else
     KXLAYOUT="us"
   fi
 
   if [ "${KEYVAR}" != "NONE" ] ; then
     SETXKBMAP="${SETXKBMAP} -variant ${KEYVAR}"
-    if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/90_org.gnome.desktop.input-sources.gschema.override ] ; then
-      sed -i '' "s/+std/+${KEYVAR}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/90_org.gnome.desktop.input-sources.gschema.override
-      run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
-    fi
   fi
 
   # Setup .xprofile with our setxkbmap call now
@@ -134,15 +125,23 @@ localize_x_keyboard()
 
   # For Mate and XFCE
   if [ "${KEYVAR}" == "NONE" ] ; then
-    if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override ] ; then
-      sed -i '' "s/us/${KXLAYOUT}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
+    if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/org.mate.peripherals-keyboard-xkb.gschema.xml ] ; then
+      keyboard_xkb=${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
+      echo "[org.mate.peripherals-keyboard-xkb.kbd]" > ${keyboard_xkb}
+      echo "layouts=['${KXLAYOUT}']" >> ${keyboard_xkb}
+      echo "model='${KXMODEL}'" >> ${keyboard_xkb}
+      echo "options=['${OPTION}']" >> ${keyboard_xkb}
       run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
     elif [ -f ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml ] ; then
       sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
     fi
   else
-    if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override ] ; then
-      sed -i '' "s/us/${KXLAYOUT}\\\t${KEYVAR}/g" ${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
+    if [ -f ${FSMNT}/usr/local/share/glib-2.0/schemas/org.mate.peripherals-keyboard-xkb.gschema.xml ] ; then
+      keyboard_xkb=${FSMNT}/usr/local/share/glib-2.0/schemas/92_org.mate.peripherals-keyboard-xkb.kbd.gschema.override
+      echo "[org.mate.peripherals-keyboard-xkb.kbd]" > ${keyboard_xkb}
+      echo "layouts=['${KXLAYOUT}\\t${KEYVAR}']" >> ${keyboard_xkb}
+      echo "model='${KXMODEL}'" >> ${keyboard_xkb}
+      echo "options=['${OPTION}']" >> ${keyboard_xkb}
       run_chroot_cmd "glib-compile-schemas /usr/local/share/glib-2.0/schemas/"
     elif [ -f ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml ] ; then
       sed -i '' "s/value="\""us"\""/value="\""${KXLAYOUT}"\""/g" ${FSMNT}/usr/local/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml
