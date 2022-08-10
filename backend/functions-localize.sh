@@ -85,6 +85,7 @@ localize_x_keyboard()
   KEYLAY="$2"
   KEYVAR="$3"
   OPTION="grp\\tgrp:alt_shift_toggle"
+  SETXKBMAP=""
 
   if [ "${KEYMOD}" != "NONE" ] ; then
     SETXKBMAP="-model ${KEYMOD}"
