@@ -37,16 +37,14 @@
 check_autologin()
 {
   get_value_from_cfg autoLoginUser
-  if [ -n "${VAL}"  -a "${INSTALLTYPE}" = "TrueOS" ]
-  then
+  if [ -n "${VAL}"  -a "${INSTALLTYPE}" = "TrueOS" ] ; then
     AUTOU="${VAL}"
     # Add the auto-login user line
     sed -i.bak "s/AutoLoginUser=/AutoLoginUser=${AUTOU}/g" ${FSMNT}/usr/local/kde4/share/config/kdm/kdmrc
 
     # Add the auto-login user line
     sed -i.bak "s/AutoLoginEnable=false/AutoLoginEnable=true/g" ${FSMNT}/usr/local/kde4/share/config/kdm/kdmrc
-  elif [ "${INSTALLTYPE}" = "GhostBSD" ]
-  then
+  elif [ "${INSTALLTYPE}" = "GhostBSD" ] ; then
     if [ -n "${VAL}" ]
     then
       AUTOU="${VAL}"
@@ -56,10 +54,8 @@ check_autologin()
       # Remmoving the auto-login & ghostbsd user line
       sed -i "" "s/AutomaticLoginEnable=True/AutomaticLoginEnable=False/g" ${FSMNT}/usr/local/etc/gdm/custom.conf
     fi
-      elif [ "${INSTALLTYPE}" = "DesktopBSD" ]
-  then
-    if [ -n "${VAL}" ]
-    then
+  elif [ "${INSTALLTYPE}" = "DesktopBSD" ] ; then
+    if [ -n "${VAL}" ] ; then
       AUTOU="${VAL}"
       # Adding the auto-login user line
       sed -i "" "s/desktopbsd/${AUTOU}/g" ${FSMNT}/usr/local/etc/gdm/custom.conf
