@@ -83,6 +83,15 @@ add_user()
 
 };
 
+remove_live_user()
+{
+  if [ -d "/usr/home/ghostbsd" ] || [ -d "/home/ghostbsd" ]
+  then
+    echo "Remove GhostBSD live user"
+    run_chroot_cmd "pw userdel -n ghostbsd -r"
+  fi
+}
+
 # Function which reads in the config, and adds any users specified
 setup_users()
 {
@@ -90,6 +99,7 @@ setup_users()
   if [ ! -e "${FSMNT}/home" ] ; then
     run_chroot_cmd "ln -s /usr/home /home"
   fi
+  # TODO: remove for 14.0
   if [ ! -d "${FSMNT}/usr/home" ] ; then
     run_chroot_cmd "mkdir /usr/home"
   fi
@@ -222,4 +232,4 @@ setup_users()
   # Check if we need to enable a user to auto-login to the desktop
   check_autologin
 
-};
+}
