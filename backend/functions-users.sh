@@ -94,9 +94,6 @@ setup_users()
   if [ ! -e "${FSMNT}/home" ] ; then
     run_chroot_cmd "ln -s /usr/home /home"
   fi
-  if [ ! -d "${FSMNT}/usr/home" ] ; then
-    run_chroot_cmd "mkdir /usr/home"
-  fi
 
   # We are ready to start setting up the users, lets read the config
   while read line
