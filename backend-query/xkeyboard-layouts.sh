@@ -44,7 +44,7 @@ do
     echo $line | grep '! ' >/dev/null 2>/dev/null
     if [ "$?" = "0" ]
     then
-	break
+      break
     else 
       echo "$line" >> ${TMPLIST}
     fi 

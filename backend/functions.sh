@@ -481,6 +481,9 @@ install_fresh()
     # Save any networking config on the installed system
     save_networking_install
 
+    # Remove the live user if it exist
+    remove_live_user
+
     # Now add any users
     setup_users
 
@@ -520,6 +523,9 @@ install_extractonly()
 
   # Save any networking config on the installed system
   save_networking_install
+
+  # Remove the live user if it exist
+  remove_live_user
 
   # Now add any users
   setup_users
@@ -570,6 +576,9 @@ install_upgrade()
 
   # Save any networking config on the installed system
   save_networking_install
+
+  # Remove the live user if it exist
+  remove_live_user
 
   # Now add any users
   setup_users
