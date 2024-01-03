@@ -115,6 +115,14 @@ if [ -n "$VAL" ] ; then
   export ZPOOLCUSTOMNAME="${VAL}"
 fi
 
+# See if beName exist and export it if not set default
+get_value_from_cfg beName
+if [ -n "$VAL" ] ; then
+  export BENAME="${VAL}"
+else
+  export BENAME="default"
+fi
+
 # Check the desired ashift size
 get_value_from_cfg ashift
 if [ -n "$VAL" ] ; then
