@@ -71,10 +71,10 @@ get_fs_line_xvars()
        do
           echo $i | grep -q '/dev/'
           if [ $? -ne 0 ] ; then
-	     case $i in
-		disk|file|mirror|raidz1|raidz2|raidz3|spare|log|cache|stripe) ZFSVARS="$ZFSVARS ${i}" ;;
-		*) ZFSVARS="$ZFSVARS /dev/${i}" ;;
-	     esac
+            case $i in
+              disk|file|mirror|raidz1|raidz2|raidz3|spare|log|cache|stripe) ZFSVARS="$ZFSVARS ${i}" ;;
+            *) ZFSVARS="$ZFSVARS /dev/${i}" ;;
+            esac
           else
              ZFSVARS="$ZFSVARS $i"
           fi
@@ -952,7 +952,7 @@ check_fstab_mbr()
 
   if [ -z "$2" ]
   then
-	return 1
+    return 1
   fi
 
   SLICE="$1"
@@ -1003,7 +1003,7 @@ check_fstab_gpt()
 
   if [ -z "$2" ]
   then
-	return 1
+    return 1
   fi
 
   SLICE="$1"
@@ -1016,15 +1016,14 @@ check_fstab_gpt()
     cat "${FSTAB}" | awk '{ print $2 }' | grep -qE '^/$' 2>&1
     if [ $? -eq 0 ]
     then
-      if [ "${PARTNUMBER}" = "2" ]
-      then
+      if [ "${PARTNUMBER}" = "2" ] ; then
         FOUNDROOT="0"
       else
         if [ -n "$FREESPACEINSTALL" ] ; then
-	   FOUNDROOT="0"
-	else
-	   FOUNDROOT="1"
-	fi
+          FOUNDROOT="0"
+        else
+          FOUNDROOT="1"
+        fi
       fi
 
       ROOTIMAGE="1"
@@ -1065,7 +1064,7 @@ check_disk_layout()
 
   if [ -z "${DISK}" ]
   then
-	return 1
+    return 1
   fi
 
   SLICES_MBR=`ls /dev/${DISK}s[1-4]*[a-h]* 2>/dev/null`

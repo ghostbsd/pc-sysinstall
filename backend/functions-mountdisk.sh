@@ -52,15 +52,15 @@ mount_partition()
 
 
   #We are on ZFS, lets setup this mount-point
-  if [ "${PARTFS}" = "ZFS" ]
-  then
+  if [ "${PARTFS}" = "ZFS" ] ; then
     ZPOOLNAME=$(get_zpool_name "${PART}")
 
+    echo_log "Creating ZFS datasets.."
     # Check if we have multiple zfs mounts specified
     for ZMNT in `echo ${MNTPOINT} | sed 's|,| |g'`
     do
       # Check for any ZFS specific mount options
-      ZMNTOPTS="`echo $ZMNT | cut -d '(' -f 2 | cut -d ')' -f 1`"
+      ZMNTOPTS="-o `echo $ZMNT | cut -d '(' -f 2 | cut -d ')' -f 1 | sed 's/|/ -o /g'`"
       if [ "$ZMNTOPTS" = "$ZMNT" ] ; then ZMNTOPTS="" ; fi
 
       # Reset ZMNT with options removed
@@ -71,96 +71,23 @@ mount_partition()
         mkdir -p ${FSMNT}${ZMNT} >>${LOGOUT} 2>>${LOGOUT}
       fi
 
-      # Check for any volsize args
-      zcopt=""
-      for ZOPT in `echo $ZMNTOPTS | sed 's/|/ /g'`
-      do
-        echo "$ZOPT" | grep -q volsize
-        if [ $? -eq 0 ] ; then
-          volsize=`echo $ZOPT | cut -d '=' -f 2`
-          zcopt="-V $volsize"
-        fi
-      done
-
       if [ "${ZMNT}" = "/" ] ; then
         # If creating ZFS / dataset, give it name that beadm works with
-        ZNAME="/ROOT/${BENAME}"
-        ZMKMNT=""
-        echo_log "zfs create $zcopt -p ${ZPOOLNAME}/ROOT"
-        rc_halt "zfs create $zcopt -p ${ZPOOLNAME}/ROOT"
-        echo_log "zfs create $zcopt -p ${ZPOOLNAME}${ZNAME}"
-        rc_halt "zfs create $zcopt -p ${ZPOOLNAME}${ZNAME}"
-      else
-        ZNAME="${ZMNT}"
-        ZMKMNT="${ZMNT}"
-
-        # Lets check if we are missing any parent dataset
-        # chkDir=`dirname $ZMNT`
-        # mkParents=""
-        # while
-        # z=0
-        # do
-        #   # Are we at the base dataset?
-        #   if [ "$chkDir" = "/" ]; then break ; fi
-
-        #   # Do we have this dataset?
-        #   zfs list | grep -q "^${ZPOOLNAME}${chkDir} "
-        #   if [ $? -eq 0 ]; then break ; fi
-
-        #   # Save this dataset to create
-        #   mkParents="$chkDir $mkParents"
-
-        #   # Get the next dir to check
-        #   chkDir=`dirname $chkDir`
-        # done
-
-        # # Any ZFS parent datasets to create?
-        # if [ -n "$mkParents" ] ; then
-        #   for p in $mkParents
-        #   do
-        #     # Since the user didn't explictly specify this dataset
-        #     # we assume they don't really want it mounted
-        #     echo_log "zfs create -o canmount=off -p ${ZPOOLNAME}${p}"
-        #     rc_halt "zfs create -o canmount=off -p ${ZPOOLNAME}${p}"
-        #     rc_halt "zfs set mountpoint= ${ZPOOLNAME}${p}"
-        #   done
-        # fi
-
-        # Create the target ZFS dataset now
-        echo_log "zfs create $zcopt -p ${ZPOOLNAME}${ZNAME}"
-        rc_halt "zfs create $zcopt -p ${ZPOOLNAME}${ZNAME}"
-      fi
-
-      if [ -z "$zcopt" ] ; then
-        rc_halt "zfs set mountpoint=${FSMNT}${ZMKMNT} ${ZPOOLNAME}${ZNAME}"
-      fi
-
-      # Do we need to make this / zfs dataset bootable?
-      if [ "$ZMNT" = "/" ] ; then
-        echo_log "Stamping ${ZPOOLNAME}/ROOT/${BENAME} as bootfs"
-        rc_halt "zpool set bootfs=${ZPOOLNAME}/ROOT/${BENAME} ${ZPOOLNAME}"
-      fi
-
-      # Do we need to make this /boot zfs dataset bootable?
-      if [ "$ZMNT" = "/boot" ] ; then
+        echo_log "zfs create -o mountpoint=none -p ${ZPOOLNAME}/ROOT"
+        rc_halt "zfs create -o mountpoint=none -p ${ZPOOLNAME}/ROOT"
+        echo_log "zfs create -o mountpoint=/ -p ${ZPOOLNAME}/ROOT/${BENAME}"
+        rc_halt "zfs create -o mountpoint=/ -p ${ZPOOLNAME}/ROOT/${BENAME}"
         echo_log "Stamping ${ZPOOLNAME}${ZMNT} as bootfs"
-        rc_halt "zpool set bootfs=${ZPOOLNAME}${ZMNT} ${ZPOOLNAME}"
+        rc_halt "zpool set bootfs=${ZPOOLNAME}/ROOT/${BENAME} ${ZPOOLNAME}"
+        echo_log "zfs set canmount=noauto ${ZPOOLNAME}/ROOT/${BENAME}"
+        rc_halt "zfs set canmount=noauto ${ZPOOLNAME}/ROOT/${BENAME}"
+      else
+        # Create the target ZFS dataset now
+        echo_log "zfs create ${ZMNTOPTS} -p ${ZPOOLNAME}${ZMNT}"
+        rc_halt "zfs create ${ZMNTOPTS} -p ${ZPOOLNAME}${ZMNT}"
       fi
 
-      # If no ZFS options, we can skip
-      if [ -z "$ZMNTOPTS" ] ; then continue ; fi
-
-      # Parse any ZFS options now
-      for ZOPT in `echo $ZMNTOPTS | sed 's/|/ /g'`
-      do
-        echo "$ZOPT" | grep -q volsize
-        if [ $? -eq 0 ] ; then continue ; fi
-        echo "$ZOPT" | grep -q mountpoint
-        if [ $? -eq 0 ] ; then continue ; fi
-        rc_halt "zfs set $ZOPT ${ZPOOLNAME}${ZNAME}"
-      done
     done # End of adding ZFS mounts
-
   else
     # If we are not on ZFS, lets do the mount now
     # First make sure we create the mount point
