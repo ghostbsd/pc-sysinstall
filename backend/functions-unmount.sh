@@ -348,26 +348,17 @@ setup_efi_boot()
       EFIFILE="${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
       EFILABEL="${SYSTEM}"
 
-      # Set GhostBSD active
       # Check if this label already exists and delete if so
       EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
       if [ -n "$EFINUM" ] ; then
-        rc_nohalt "efibootmgr -B $EFINUM"
-      fi
-
-      # Create the new EFI entry
-      rc_halt "efibootmgr -c -l $EFIFILE -L $EFILABEL"
-      #Try to activate this new entry
-      EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
-      if [ -n "$EFINUM" ] ; then
-        rc_nohalt "efibootmgr -a $EFINUM" #activate it
+        rc_nohalt "efibootmgr -B -b $EFINUM"
       fi
 
       # Set refind active and to boot on next boot
       # Check if this label already exists and delete if so
       REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
       if [ -n "$REFINDEFINUM" ] ; then
-        rc_nohalt "efibootmgr -B $REFINDEFINUM"
+        rc_nohalt "efibootmgr -B -b $REFINDEFINUM"
       fi
 
       # Create the new REFINDEFI entry
@@ -375,8 +366,8 @@ setup_efi_boot()
       #Try to activate this new entry
       REFINDEFINUM=$(efibootmgr | grep $REFINDEFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
       if [ -n "$REFINDEFINUM" ] ; then
-        rc_nohalt "efibootmgr -a $REFINDEFINUM" #activate it
-        rc_nohalt "efibootmgr -n $REFINDEFINUM" #Set it as the next boot default
+        rc_nohalt "efibootmgr -a -b $REFINDEFINUM" #activate it
+        rc_nohalt "efibootmgr -n -b $REFINDEFINUM" #Set it as the next boot default
       fi
     else
       # BSD Loader only
@@ -386,7 +377,7 @@ setup_efi_boot()
       # Check if this label already exists and delete if so
       EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
       if [ -n "$EFINUM" ] ; then
-        rc_nohalt "efibootmgr -B $EFINUM"
+        rc_nohalt "efibootmgr -B -b $EFINUM"
       fi
 
       # Create the new EFI entry
@@ -394,8 +385,8 @@ setup_efi_boot()
       #Try to activate this new entry
       EFINUM=$(efibootmgr | grep $EFILABEL | awk '{print $1}' | sed 's|+||g' | sed 's|*||g' | sed 's|Boot||g')
       if [ -n "$EFINUM" ] ; then
-        rc_nohalt "efibootmgr -a $EFINUM" #activate it
-        rc_nohalt "efibootmgr -n $EFINUM" #Set it as the next boot default
+        rc_nohalt "efibootmgr -a -b $EFINUM" #activate it
+        rc_nohalt "efibootmgr -n -b $EFINUM" #Set it as the next boot default
       fi
     fi
 
