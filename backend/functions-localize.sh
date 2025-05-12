@@ -212,6 +212,7 @@ set_timezone()
 {
   TZONE="$1"
   cp ${FSMNT}/usr/share/zoneinfo/${TZONE} ${FSMNT}/etc/localtime
+  echo ${TZONE} | tee ${FSMNT}/var/db/zoneinfo > /dev/null
 };
 
 # Function which enables / disables NTP
