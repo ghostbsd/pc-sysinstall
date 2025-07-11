@@ -85,7 +85,7 @@ add_user()
 
 remove_live_user()
 {
-  if [ -d "/usr/home/ghostbsd" ] || [ -d "/home/ghostbsd" ]
+  if [ -d "/usr/home/ghostbsd" ] || [ -d "/home/ghostbsd" ] || [ -d "/Users/ghostbsd" ]
   then
     echo "Remove GhostBSD live user"
     run_chroot_cmd "pw userdel -n ghostbsd -r"
