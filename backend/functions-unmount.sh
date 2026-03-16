@@ -340,7 +340,7 @@ setup_efi_boot()
       # We have refind on the install media, lets use that for dual-boot purposes
       rc_nohalt "mkdir -p ${FSMNT}/boot/efi/EFI/refind"
       rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
-      rc_halt "cp /usr/local/refind/refind.conf ${FSMNT}/boot/efi/EFI/refind/REFIND.CONF"
+      rc_halt "cp /usr/local/refind/refind.conf-sample ${FSMNT}/boot/efi/EFI/refind/REFIND.CONF"
       rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/refind/ICONS"
       rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
       REFINDEFIFILE="${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
@@ -388,16 +388,6 @@ setup_efi_boot()
         rc_nohalt "efibootmgr -a -b $EFINUM" #activate it
         rc_nohalt "efibootmgr -n -b $EFINUM" #Set it as the next boot default
       fi
-    fi
-
-    # Now ensure the fallback location for the EFI boot partition exists, and make it if needed
-    if [ -d '/usr/local/refind' -a "$EFILOADER" = "refind" ] ; then
-      # We have refind on the install media, lets use that for dual-boot purposes
-      rc_halt "cp /usr/local/refind/refind.conf ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
-      rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
-      rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
-    else
-      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
     fi
 
     # Cleanup
