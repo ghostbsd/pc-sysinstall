@@ -342,6 +342,7 @@ setup_efi_boot()
       rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
       rc_halt "cp /usr/local/refind/refind.conf-sample ${FSMNT}/boot/efi/EFI/refind/REFIND.CONF"
       rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/refind/ICONS"
+      re_halt "cp /usr/local/refind/background.png ${FSMNT}/boot/efi/EFI/refind/background.png"
       rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/${LOWERCASE_SYSTEM}/BOOTX64.EFI"
       REFINDEFIFILE="${FSMNT}/boot/efi/EFI/refind/BOOTX64.EFI"
       REFINDEFILABEL="rEFInd"
