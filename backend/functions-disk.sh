@@ -416,12 +416,9 @@ stop_all_geli()
   done
 
   # Clear GELI metadata from all partitions on this disk
-  for i in `ls ${_geld}*`
-  do
-    echo $i | grep -q '.eli' 2>/dev/null
-    if [ $? -ne 0 ] ; then
-      rc_nohalt "geli clear ${i}"
-    fi
+  for i in ${_geld}*; do
+    [ -e "$i" ] || continue
+    echo "$i" | grep -q '.eli' 2>/dev/null || rc_nohalt "geli clear ${i}"
   done
 
 };

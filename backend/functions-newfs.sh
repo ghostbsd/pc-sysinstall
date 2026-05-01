@@ -145,7 +145,7 @@ setup_filesystems()
     fi
 
     # Setup encryption if necessary
-    if [ "${PARTENC}" = "ON" -a "${PARTFS}" != "SWAP" ]
+    if [ "${PARTENC}" = "ON" ] && [ "${PARTFS}" != "SWAP" ]
     then
       echo_log "Creating geli provider for ${PARTDEV}"
 
@@ -174,7 +174,7 @@ setup_filesystems()
       fi
 
       EXT=".eli"
-    elif [ "${PARTENC}" = "ON" -a "${PARTFS}" = "SWAP" ]
+    elif [ "${PARTENC}" = "ON" ] && [ "${PARTFS}" = "SWAP" ]
     then
       # Swap encryption uses one-time random keys managed by the kernel
       # at boot via the .eli suffix in fstab. No geli init is needed;
@@ -187,11 +187,11 @@ setup_filesystems()
 
     # If we are doing mirrored ZFS disks, initialise GELI on each mirror member
     # using the same passphrase so all members can be unlocked at boot.
-    if [ -n "$GELI_CLONE_ZFS_DISKS" -a "$GELI_CLONE_ZFS_DEV" = "$PARTDEV" ] ; then
+    if [ -n "$GELI_CLONE_ZFS_DISKS" ] && [ "$GELI_CLONE_ZFS_DEV" = "$PARTDEV" ] ; then
        for gC in $GELI_CLONE_ZFS_DISKS
        do
          echo_log "Setting up GELI on mirrored disks: ${gC}"
-         rc_halt "geli init -b -e AES-XTS -l 256 -s 4096 -J ${PARTDIR}-enc/${PART}-encpass ${gC}"
+         rc_halt "geli init -bg -e AES-XTS -l 256 -s 4096 -J ${PARTDIR}-enc/${PART}-encpass ${gC}"
          rc_halt "geli attach -j ${PARTDIR}-enc/${PART}-encpass ${gC}"
        done
     fi
