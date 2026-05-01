@@ -83,7 +83,7 @@ setup_zfs_filesystem()
 
   if [ -n "${ZFSASHIFT}" ] ; then
     # Set specifed ashift size
-    sysctl vfs.zfs.min_auto_ashift=${ZFSASHIFT}
+    sysctl vfs.zfs.vdev.min_auto_ashift=${ZFSASHIFT}
   fi
 
   # Verify this pool isn't already in use
@@ -149,32 +149,49 @@ setup_filesystems()
     then
       echo_log "Creating geli provider for ${PARTDEV}"
 
-      rc_halt "kldstat -v |grep -q g_eli || kldload geom_eli"
-      if [ -e "${PARTDIR}-enc/${PART}-encpass" ] ; then
-        # Using a passphrase
-        rc_halt "geli init -g -b -J ${PARTDIR}-enc/${PART}-encpass ${PARTDEV}"
-        rc_halt "geli attach -j ${PARTDIR}-enc/${PART}-encpass ${PARTDEV}"
-        touch ${TMPDIR}/.grub-install-geli
-      else
-        # No Encryption password, use key file
-        rc_halt "dd if=/dev/random of=${GELIKEYDIR}/${PART}.key bs=64 count=1"
-        rc_halt "geli init -g -b -s 4096 -P -K ${GELIKEYDIR}/${PART}.key ${PARTDEV}"
-        rc_halt "geli attach -p -k ${GELIKEYDIR}/${PART}.key ${PARTDEV}"
+      # Load geom_eli and AES-NI acceleration modules
+      rc_halt "kldstat -v | grep -q g_eli || kldload geom_eli"
+      kldload aesni 2>/dev/null; true
 
+      # Clear any stale GELI metadata from a previous install
+      rc_nohalt "geli clear ${PARTDEV}"
+
+      if [ -e "${PARTDIR}-enc/${PART}-encpass" ] ; then
+        # Passphrase mode: -b flags this provider for boot-time passphrase
+        # prompt via FreeBSD's loader. -g (geliboot) tells the loader to
+        # attach this GELI provider early in boot before importing ZFS pools.
+        # AES-XTS with a 256-bit key and 4096-byte sector size matches the
+        # FreeBSD installer defaults (same as bsdinstall).
+        rc_halt "geli init -bg -e AES-XTS -l 256 -s 4096 -J ${PARTDIR}-enc/${PART}-encpass ${PARTDEV}"
+        rc_halt "geli attach -j ${PARTDIR}-enc/${PART}-encpass ${PARTDEV}"
+      else
+        # Key file mode: generate a random key stored in GELIKEYDIR and
+        # copied to /boot/keys/ on the installed system by setup_geli_loading().
+        # The -P flag disables passphrase so only the key file is required.
+        rc_halt "dd if=/dev/random of=${GELIKEYDIR}/${PART}.key bs=4096 count=1"
+        rc_halt "geli init -b -e AES-XTS -l 256 -s 4096 -P -K ${GELIKEYDIR}/${PART}.key ${PARTDEV}"
+        rc_halt "geli attach -p -k ${GELIKEYDIR}/${PART}.key ${PARTDEV}"
       fi
 
       EXT=".eli"
+    elif [ "${PARTENC}" = "ON" -a "${PARTFS}" = "SWAP" ]
+    then
+      # Swap encryption uses one-time random keys managed by the kernel
+      # at boot via the .eli suffix in fstab. No geli init is needed;
+      # just skip the EXT so glabel operates on the raw device.
+      EXT=""
     else
       # No Encryption
       EXT=""
     fi
 
-    # If we are doing mirrored ZFS disks
+    # If we are doing mirrored ZFS disks, initialise GELI on each mirror member
+    # using the same passphrase so all members can be unlocked at boot.
     if [ -n "$GELI_CLONE_ZFS_DISKS" -a "$GELI_CLONE_ZFS_DEV" = "$PARTDEV" ] ; then
        for gC in $GELI_CLONE_ZFS_DISKS
        do
          echo_log "Setting up GELI on mirrored disks: ${gC}"
-         rc_halt "geli init -g -b -J ${PARTDIR}-enc/${PART}-encpass ${gC}"
+         rc_halt "geli init -b -e AES-XTS -l 256 -s 4096 -J ${PARTDIR}-enc/${PART}-encpass ${gC}"
          rc_halt "geli attach -j ${PARTDIR}-enc/${PART}-encpass ${gC}"
        done
     fi

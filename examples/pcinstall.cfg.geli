@@ -26,10 +26,9 @@ commitDiskPart
 # All sizes are expressed in MB
 # Avail FS Types, UFS, UFS+S, UFS+J, ZFS, SWAP
 # UFS.eli, UFS+S.eli, UFS+J.eli, ZFS.eli, SWAP.eli
-disk0-part=UFS 500 /boot
-disk0-part=UFS.eli 500 /
-disk0-part=UFS.eli 500 /usr
+disk0-part=ZFS.eli 0 /,/home(mountpoint=/home),/tmp(mountpoint=/tmp|exec=on|setuid=off),/usr(mountpoint=/usr|canmount=off),/usr/ports(setuid=off),/usr/src,/var(mountpoint=/var|canmount=off),/var/audit(exec=off|setuid=off),/var/crash(exec=off|setuid=off),/var/log(exec=off|setuid=off),/var/mail(atime=on),/var/tmp(setuid=off)
 encpass=mypass
+disk0-part=SWAP.eli 0 none
 commitDiskLabel
 
 # Optional Components
