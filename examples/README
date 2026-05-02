@@ -193,7 +193,9 @@ on the target partition
 # disk0-part=UFS.eli 500 /usr
 # encpass=mypass
 # disk0-part=UFS+J 500 /tmp
-# disk0-part=ZFS 0 /data,/storage (mirror: ad1)
+# disk0-part=ZFS.eli 0 /data,/storage (mirror: ad1)
+# encpass=mypass
+# disk0-part=SWAP.eli 2000 none
 # commitDiskLabel
 
 The above values instructs pc-sysinstall which partitions / mounts
@@ -215,9 +217,20 @@ Adding the ".eli" extension to any of the above file systems
 will enable disk encryption via geli
 (UFS.eli, UFS+S.eli, UFS+SUJ.eli, UFS+J.eli, ZFS.eli, SWAP.eli)
 
-If you with to use a passphrase with this encrypted partition, on the next line
-the flag "encpass=" should be entered:
+GELI providers are initialised with AES-XTS, a 256-bit key, and
+4096-byte sectors.
+
+If you wish to use a passphrase with an encrypted partition, place
+"encpass=" on the line immediately after EACH .eli partition line:
 encpass=mypass
+
+encpass= must follow each .eli line individually. If it is omitted
+for a partition, a random key file is generated and copied to
+/boot/keys/ on the installed system; no passphrase is needed at boot.
+
+The following entries are written to /boot/loader.conf automatically:
+  aesni_load="YES"
+  geom_eli_load="YES"
 
 All sizes are expressed in MegaBytes
 Specifying a size 0 instructs pc-sysinstall to use the rest of the

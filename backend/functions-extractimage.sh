@@ -685,7 +685,7 @@ init_extraction()
       start_extract_uzip_tar
       ;;
     livezfs)
-      cpdup -i0 -s0 -vvv -X zpool.cache / ${FSMNT}
+      rc_halt_echo "cpdup -i0 -s0 -vvv -X zpool.cache / ${FSMNT}"
       ;;
     *) exit_err "ERROR: Unknown install medium" ;;
   esac

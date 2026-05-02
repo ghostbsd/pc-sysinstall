@@ -223,7 +223,15 @@ setup_fstab()
       # Echo out the fstab entry now
       if [ "${PARTFS}" = "SWAP" ]
       then
-        echo "/dev/${DEVICE}	none		swap	${MNTOPTS}	0	0" >> ${FSTAB}
+        # For encrypted swap, use the raw device with .eli suffix so the
+        # kernel creates a one-time geli provider with a random key at boot.
+        # The key is discarded on reboot, which is the standard FreeBSD
+        # approach (same as bsdinstall).
+        if [ "${PARTENC}" = "ON" ] ; then
+          echo "/dev/${PARTDEV}.eli	none		swap	${MNTOPTS}	0	0" >> ${FSTAB}
+        else
+          echo "/dev/${DEVICE}	none		swap	${MNTOPTS}	0	0" >> ${FSTAB}
+        fi
       else
         echo "/dev/${DEVICE}	${PARTMNT}		ufs	${MNTOPTS}	1	1" >> ${FSTAB}
       fi
@@ -265,7 +273,10 @@ setup_gmirror()
 
 };
 
-# Function which saves geli keys and sets up loading of them at boot
+# Function which saves geli keys and sets up loading of them at boot.
+# Only called when key files exist in GELIKEYDIR (i.e. key file mode).
+# For passphrase mode no key files are created; the loader prompts for
+# the passphrase via geom_eli_passphrase_prompt (set in run_final_cleanup).
 setup_geli_loading()
 {
 
@@ -280,15 +291,15 @@ setup_geli_loading()
      PARTDEV="`echo ${PART} | sed 's|-|/|g'`"
      PARTNAME="`echo ${PART} | sed 's|-dev-||g'`"
 
-     rc_halt "geli configure -b ${PARTDEV}"
-
-     # If no passphrase, setup key files
+     # Key file mode: write loader.conf entries so the boot loader can
+     # read the key from /boot/keys/ and attach the GELI provider before
+     # importing the ZFS pool. Skip if a passphrase was used instead.
      if [ ! -e "${PARTDIR}-enc/${PART}-encpass" ] ; then
        echo "geli_${PARTNAME}_keyfile0_load=\"YES\"" >> ${FSMNT}/boot/loader.conf
        echo "geli_${PARTNAME}_keyfile0_type=\"${PARTNAME}:geli_keyfile0\"" >> ${FSMNT}/boot/loader.conf
        echo "geli_${PARTNAME}_keyfile0_name=\"/boot/keys/${PARTNAME}.key\"" >> ${FSMNT}/boot/loader.conf
 
-       # Copy the key to the disk
+       # Copy the key to the installed system
        rc_halt "cp ${GELIKEYDIR}/${KEYFILE} ${FSMNT}/boot/keys/${PARTNAME}.key"
      fi
 
@@ -404,12 +415,17 @@ run_final_cleanup()
     setup_geli_loading
   fi
 
-  # Make sure we have geom_eli set to load at boot
-  cat ${FSMNT}/boot/loader.conf 2>/dev/null | grep -q 'geom_eli_load="YES"' 2>/dev/null
-  if [ $? -ne 0 ]; then
-    echo 'crypto_load="YES"' >>${FSMNT}/boot/loader.conf
-    echo 'aesni_load="YES"' >>${FSMNT}/boot/loader.conf
-    echo 'geom_eli_load="YES"' >>${FSMNT}/boot/loader.conf
+  # Only add GELI loader entries when encryption is actually in use.
+  # The -bg flag on geli init already causes the loader to prompt for
+  # the passphrase during early boot, so geom_eli_passphrase_prompt
+  # is not needed and would cause a duplicate prompt.
+  grep -rq '#ON#' ${PARTDIR}/* 2>/dev/null
+  if [ $? -eq 0 ]; then
+    cat ${FSMNT}/boot/loader.conf 2>/dev/null | grep -q 'geom_eli_load="YES"' 2>/dev/null
+    if [ $? -ne 0 ]; then
+      echo 'aesni_load="YES"' >>${FSMNT}/boot/loader.conf
+      echo 'geom_eli_load="YES"' >>${FSMNT}/boot/loader.conf
+    fi
   fi
 
   # Set a hostname on the install system

@@ -411,8 +411,14 @@ stop_all_geli()
     if [ $? -eq 0 ]
     then
       echo_log "Detaching GELI on ${i}"
-      rc_halt "geli detach ${i}"
+      rc_nohalt "geli detach ${i}"
     fi
+  done
+
+  # Clear GELI metadata from all partitions on this disk
+  for i in ${_geld}*; do
+    [ -e "$i" ] || continue
+    echo "$i" | grep -q '.eli' 2>/dev/null || rc_nohalt "geli clear ${i}"
   done
 
 };
