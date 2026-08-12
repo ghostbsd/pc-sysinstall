@@ -391,6 +391,19 @@ setup_efi_boot()
       fi
     fi
 
+    # Now ensure the fallback location (EFI/BOOT/BOOTX64.EFI) is populated.
+    # This is the default path UEFI firmware looks for when no boot entry is
+    # registered, which is what happens on removable/USB-attached drives.
+    if [ -d '/usr/local/refind' -a "$EFILOADER" = "refind" ] ; then
+      # We have refind on the install media, lets use that for dual-boot purposes
+      rc_halt "cp /usr/local/refind/refind_x64.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
+      rc_halt "cp /usr/local/refind/refind.conf-sample ${FSMNT}/boot/efi/EFI/BOOT/REFIND.CONF"
+      rc_halt "cp -r /usr/local/refind/icons ${FSMNT}/boot/efi/EFI/BOOT/ICONS"
+      rc_halt "cp /usr/local/refind/background.png ${FSMNT}/boot/efi/EFI/BOOT/background.png"
+    else
+      rc_halt "cp ${FSMNT}/boot/loader.efi ${FSMNT}/boot/efi/EFI/BOOT/BOOTX64.EFI"
+    fi
+
     # Cleanup
     rc_halt "umount ${FSMNT}/boot/efi"
   done
