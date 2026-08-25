@@ -211,8 +211,37 @@ localize_prune_langs()
 set_timezone()
 {
   TZONE="$1"
-  cp ${FSMNT}/usr/share/zoneinfo/${TZONE} ${FSMNT}/etc/localtime
-  echo ${TZONE} | tee ${FSMNT}/var/db/zoneinfo > /dev/null
+
+  if [ ! -e "${FSMNT}/usr/share/zoneinfo/${TZONE}" ] ; then
+    echo_log "WARNING: timezone ${TZONE} not found, system left on UTC"
+    return 1
+  fi
+
+  # /etc/localtime has to be a symlink, the same way tzsetup(8) creates it.
+  # A copy freezes the zone at install time, so tzdata updates never reach
+  # the system, and tools that read the zone name from the link target see
+  # nothing configured. The target is absolute on purpose: it must not be
+  # prefixed with ${FSMNT} or the link dangles on the installed system.
+  rm -f ${FSMNT}/etc/localtime
+  ln -s /usr/share/zoneinfo/${TZONE} ${FSMNT}/etc/localtime
+
+  # Saved for tzsetup -r and for the login / lock screens
+  echo ${TZONE} > ${FSMNT}/var/db/zoneinfo
+};
+
+# Function which records whether the RTC keeps UTC or local time.
+# The presence of /etc/wall_cmos_clock makes the kernel read the RTC as
+# local time, see adjkerntz(8). The live image ships that file, and the
+# install is a copy of the live system, so "yes" means removing it.
+set_utc_clock()
+{
+  if [ "$1" = "no" -o "$1" = "NO" ] ; then
+    echo_log "Hardware clock keeps local time"
+    touch ${FSMNT}/etc/wall_cmos_clock
+  else
+    echo_log "Hardware clock keeps UTC"
+    rm -f ${FSMNT}/etc/wall_cmos_clock
+  fi
 };
 
 # Function which enables / disables NTP
@@ -247,6 +276,8 @@ run_localize()
   KEYLAYOUT="NONE"
   KEYMOD="NONE"
   KEYVAR="NONE"
+  UTCCLOCK="yes"
+  UTCCLOCKSET="no"
 
   while read line
   do
@@ -303,13 +334,30 @@ run_localize()
       set_timezone "$VAL"
     fi
 
-    # Check if we need to set a timezone
+    # Check if the RTC keeps UTC or local time
+    echo $line | grep -q "^utcClock=" 2>/dev/null
+    if [ $? -eq 0 ] ; then
+      get_value_from_string "$line"
+      UTCCLOCK="$VAL"
+      UTCCLOCKSET="yes"
+    fi
+
+    # Check if we need to enable NTP
     echo $line | grep -q "^enableNTP=" 2>/dev/null
     if [ $? -eq 0 ] ; then
       get_value_from_string "$line"
       set_ntp "$VAL"
     fi
   done <${CFGF}
+
+  # Applied even when the config carries no utcClock= line, because the
+  # live image ships /etc/wall_cmos_clock and the install inherits it, so
+  # leaving this to the config would keep older front-ends on local time.
+  # An upgrade keeps whatever the running system already had unless the
+  # config asks for a change.
+  if [ "${UTCCLOCKSET}" = "yes" -o "${INSTALLMODE}" != "upgrade" ] ; then
+    set_utc_clock "${UTCCLOCK}"
+  fi
 
   if [ "${INSTALLTYPE}" != "FreeBSD" ] ; then
     # Do our X keyboard localization
