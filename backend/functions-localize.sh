@@ -212,8 +212,8 @@ set_timezone()
 {
   TZONE="$1"
 
-  if [ ! -e "${FSMNT}/usr/share/zoneinfo/${TZONE}" ] ; then
-    echo_log "WARNING: timezone ${TZONE} not found, system left on UTC"
+  if [ ! -f "${FSMNT}/usr/share/zoneinfo/${TZONE}" ] ; then
+    echo_log "WARNING: timezone ${TZONE} not found, timezone left unchanged"
     return 1
   fi
 
@@ -222,8 +222,10 @@ set_timezone()
   # the system, and tools that read the zone name from the link target see
   # nothing configured. The target is absolute on purpose: it must not be
   # prefixed with ${FSMNT} or the link dangles on the installed system.
-  rm -f ${FSMNT}/etc/localtime
-  ln -s /usr/share/zoneinfo/${TZONE} ${FSMNT}/etc/localtime
+  if ! ln -sf /usr/share/zoneinfo/${TZONE} ${FSMNT}/etc/localtime ; then
+    echo_log "WARNING: failed to link /etc/localtime to ${TZONE}"
+    return 1
+  fi
 
   # Saved for tzsetup -r and for the login / lock screens
   echo ${TZONE} > ${FSMNT}/var/db/zoneinfo
@@ -235,7 +237,14 @@ set_timezone()
 # install is a copy of the live system, so "yes" means removing it.
 set_utc_clock()
 {
-  if [ "$1" = "no" -o "$1" = "NO" ] ; then
+  UTCVAL=`echo "$1" | tr '[:upper:]' '[:lower:]'`
+
+  if [ "${UTCVAL}" != "yes" -a "${UTCVAL}" != "no" ] ; then
+    echo_log "WARNING: utcClock is set to unknown value $1, using yes"
+    UTCVAL="yes"
+  fi
+
+  if [ "${UTCVAL}" = "no" ] ; then
     echo_log "Hardware clock keeps local time"
     touch ${FSMNT}/etc/wall_cmos_clock
   else
