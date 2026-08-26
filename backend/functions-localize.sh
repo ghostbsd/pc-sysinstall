@@ -257,25 +257,10 @@ set_utc_clock()
 set_ntp()
 {
   ENABLED="$1"
-  if [ "$ENABLED" = "yes" -o "${ENABLED}" = "YES" ]
-  then
-    if [ "${INSTALLTYPE}" = "FreeBSD" ] ; then
-      cat ${FSMNT}/etc/rc.conf 2>/dev/null | grep -q 'ntpd_enable="YES"' 2>/dev/null
-      if [ $? -ne 0 ]
-      then
-        echo 'ntpd_enable="YES"' >> ${FSMNT}/etc/rc.conf
-        echo 'ntpd_sync_on_start="YES"' >> ${FSMNT}/etc/rc.conf
-      fi
-    else
-      run_chroot_cmd rc-update add ntpd default
-      run_chroot_cmd sysrc -f /etc/rc.conf ntpd_sync_on_start="YES"
-    fi
+  if [ "$ENABLED" = "yes" -o "${ENABLED}" = "YES" ] ; then
+    sysrc -f ${FSMNT}/etc/rc.conf ntpd_enable="YES" ntpd_sync_on_start="YES"
   else
-    cat ${FSMNT}/etc/rc.conf 2>/dev/null | grep -q 'ntpd_enable="YES"' 2>/dev/null
-    if [ $? -ne 0 ]
-    then
-      sed -i.bak 's|ntpd_enable="YES"||g' ${FSMNT}/etc/rc.conf
-    fi
+    sysrc -f ${FSMNT}/etc/rc.conf ntpd_enable="NO"
   fi
 };
 
