@@ -65,33 +65,45 @@ EXTENDED="0"
 START="0"
 SIZEB="0"
 
-# Get a listing of partitions from the primary partition
-get_partitions_lables "${SLICE_PART}"
-LABELS="${VAL}"
-for curpart in $LABELS
+# Walk the slice in on-disk order. gpart lists entries sorted by start block,
+# so reporting each one as it is read keeps free space in its true position
+# between the labels it separates. Front-ends rely on that ordering when they
+# merge adjacent free space after a label is deleted.
+FREENUM=1
+gpart show ${SLICE_PART} | grep -v '^=>' | while read PSTART PSIZE PINDEX PLABEL PREST
 do
+  # gpart prints a trailing blank line
+  if [ -z "${PINDEX}" ] ; then
+    continue
+  fi
 
-  # First get the sysid / label for this partition
-  get_partition_label "${SLICE_PART}" "${curpart}"
-  echo "${curpart}-sysid: ${VAL}"
-  echo "${curpart}-label: ${VAL}"
+  # A gap rather than a label. Every gap is reported so it keeps its place in
+  # the sequence. blocksize is exact; sizemb rounds down and reads 0 for a gap
+  # smaller than 2048 blocks.
+  if [ "${PINDEX}" = "-" ] ; then
+    echo "${SLICE_PART}-freespace${FREENUM}-blockstart: ${PSTART}"
+    echo "${SLICE_PART}-freespace${FREENUM}-blocksize: ${PSIZE}"
+    echo "${SLICE_PART}-freespace${FREENUM}-sizemb: $(convert_blocks_to_megabyte ${PSIZE})"
+    FREENUM=$((FREENUM + 1))
+    continue
+  fi
 
-  # Now get the startblock, blocksize and MB size of this partition
-  get_label_startblock "${SLICE_PART}" "${curpart}"
-  START="${VAL}"
-  echo "${curpart}-blockstart: ${START}"
+  # Labels are lettered from their index: 1 becomes a, 2 becomes b, and so on
+  LETTER=`awk -v char=$((96+${PINDEX})) 'BEGIN { printf "%c\n", char; exit }'`
+  curpart="${SLICE_PART}${LETTER}"
 
-  get_label_blocksize "${SLICE_PART}" "${curpart}"
-  SIZEB="${VAL}"
-  echo "${curpart}-blocksize: ${SIZEB}"
+  echo "${curpart}-sysid: ${PLABEL}"
+  echo "${curpart}-label: ${PLABEL}"
+  echo "${curpart}-blockstart: ${PSTART}"
+  echo "${curpart}-blocksize: ${PSIZE}"
 
-  SIZEMB=$(convert_blocks_to_megabyte ${SIZEB})
+  SIZEMB=$(convert_blocks_to_megabyte ${PSIZE})
   echo "${curpart}-sizemb: ${SIZEMB}"
 
 done
 
 
-# Now calculate any free space
+# Now calculate the largest block of free space
 FREEB=`gpart show ${SLICE_PART} | grep '\- free\ -' | awk '{print $2}' | sort -g | tail -1`
 FREEMB="`expr ${FREEB} / 2048`"
 echo "${1}-freemb: $FREEMB"
