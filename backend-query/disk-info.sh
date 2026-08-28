@@ -52,8 +52,19 @@ SECS="${VAL}"
 KB="`diskinfo -v ${1} | grep 'bytes' | cut -d '#' -f 1 | tr -s '\t' ' ' | tr -d ' '`"
 MB=$(convert_byte_to_megabyte ${KB})
 
-# Now get the Controller Type
-CTYPE="`dmesg | grep "^${1}:" | grep ": <" | cut -d '>' -f 2 | cut -d ' ' -f 3-10`"
+# Now get the protocol family. The device name prefix is the CAM peripheral
+# that attached, so it is the protocol itself rather than a guess at it, and
+# unlike scraping dmesg it cannot come up empty once the boot messages have
+# rolled out of the ring buffer.
+case "${DISK}" in
+  ada*|ad*)   CTYPE="ATA" ;;
+  da*)        CTYPE="SCSI" ;;
+  nvd*|nda*)  CTYPE="NVMe" ;;
+  mmcsd*)     CTYPE="MMC" ;;
+  vtbd*)      CTYPE="VirtIO" ;;
+  md*)        CTYPE="Memory" ;;
+  *)          CTYPE="Unknown" ;;
+esac
 
 echo "cylinders=${CYLS}"
 echo "heads=${HEADS}"

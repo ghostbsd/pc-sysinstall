@@ -71,11 +71,36 @@ EXTENDED="0"
 START="0"
 SIZEB="0"
 
-# Get a listing of partitions on this disk
-get_disk_partitions "${DISK}"
-PARTS="${VAL}"
-for curpart in $PARTS
+# Walk the disk in on-disk order. gpart lists entries sorted by start block,
+# so reporting each one as it is read keeps free space in its true position
+# between the partitions it separates. Front-ends rely on that ordering when
+# they merge adjacent free space after a partition is deleted.
+case "${TYPE}" in
+  MBR) PSEP="s" ;;
+  GPT) PSEP="p" ;;
+  *) PSEP="s" ;;
+esac
+
+FREENUM=1
+gpart show ${DISK} | grep -v '^=>' | while read PSTART PSIZE PINDEX PLABEL PREST
 do
+  # gpart prints a trailing blank line
+  if [ -z "${PINDEX}" ] ; then
+    continue
+  fi
+
+  # A gap rather than a partition. Every gap is reported so it keeps its place
+  # in the sequence. blocksize is exact; sizemb rounds down and reads 0 for a
+  # gap smaller than 2048 blocks.
+  if [ "${PINDEX}" = "-" ] ; then
+    echo "${DISK}-freespace${FREENUM}-blockstart: ${PSTART}"
+    echo "${DISK}-freespace${FREENUM}-blocksize: ${PSIZE}"
+    echo "${DISK}-freespace${FREENUM}-sizemb: $(convert_blocks_to_megabyte ${PSIZE})"
+    FREENUM=$((FREENUM + 1))
+    continue
+  fi
+
+  curpart="${DISK}${PSEP}${PINDEX}"
 
   # First get the sysid / label for this partition
   if [ "$TYPE" = "MBR" ] ; then

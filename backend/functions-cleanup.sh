@@ -437,6 +437,14 @@ run_final_cleanup()
   # Generate the fstab for the installed system
   setup_fstab
 
+  # Address disks by their raw adaX/nvdX names on the installed system. With
+  # diskid and gptid labels enabled, an imported pool binds to
+  # diskid/DISK-<serial>, which withdraws the raw partition geom for the whole
+  # disk. gpart(8) then fails on that disk and the /dev/adaXpY entries written
+  # above, including swap and the EFI mount, stop resolving.
+  echo 'kern.geom.label.disk_ident.enable="0"' >> ${FSMNT}/boot/loader.conf
+  echo 'kern.geom.label.gptid.enable="0"' >> ${FSMNT}/boot/loader.conf
+
   # Workaround to issue in FreeBSD pkg base
   rc_nohalt "chroot ${FSMNT} chown root:operator /sbin/shutdown"
   rc_nohalt "chroot ${FSMNT} chmod 4554 /sbin/shutdown"
