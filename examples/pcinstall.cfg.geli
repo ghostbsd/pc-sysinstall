@@ -10,6 +10,7 @@ netSaveDev=AUTO-DHCP
 
 # Timezone
 timeZone=America/New_York
+utcClock=yes
 enableNTP=yes
 
 # Keyboard Layout Options

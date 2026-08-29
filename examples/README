@@ -407,6 +407,13 @@ Options for time-zones and NTP on the installed system
 timeZone can be set to the zone file in /usr/share/zoneinfo/ that is to be used
 example: America/New_York
 
+# utcClock= (yes / no)
+
+set utcClock to no when the machine's hardware clock keeps local time, which
+is normally only the case when the machine also boots Windows. The default is
+yes, meaning the hardware clock keeps UTC. This controls whether
+/etc/wall_cmos_clock exists on the installed system, see adjkerntz(8)
+
 # enableNTP= (yes / no)
 
 set enableNTP to yes or no to enable or disable the NTP service on the system
